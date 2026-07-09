@@ -93,9 +93,11 @@
   .col.drag-over{ outline:3px dashed rgba(127,127,127,.6); outline-offset:-6px; }
 
   /* ===== barra inferior ===== */
-  #bottombar{ display:flex; gap:8px; align-items:center; padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  #bottombar{ display:flex; flex-direction:column; gap:8px; padding:10px 16px calc(10px + env(safe-area-inset-bottom));
     box-shadow:0 -6px 16px rgba(26,22,20,.05);
-    border-top:1px solid var(--ink-line); flex-wrap:wrap; flex:none; background:var(--bg); }
+    border-top:1px solid var(--ink-line); flex:none; background:var(--bg); }
+  #actrow{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  #genrow{ display:none; }
 
   /* ===== modales ===== */
   .ov{ position:fixed; inset:0; background:rgba(26,22,20,.45); display:none; align-items:center; justify-content:center; z-index:50; padding:18px; }
@@ -195,7 +197,33 @@
     font:800 13px var(--font-ui); letter-spacing:.4px; padding:8px 16px; border-radius:999px; opacity:0;
     transition:opacity .18s; pointer-events:none; z-index:99; box-shadow:0 6px 18px rgba(0,0,0,.18); }
   #toast.show{ opacity:1; }
-  @media (max-width:640px){ header{ gap:8px; } .wordmark{ font-size:19px; } }
+  @media (max-width:640px){
+    :root{ --header-h:58px; }
+    header{ gap:8px; padding:0 14px; }
+    .brand{ gap:10px; }
+    .brand svg{ width:32px; height:32px; }
+    .wordmark{ font-size:45px; }
+    /* generation group lives in the bottom bar (moved by JS) */
+    #genrow{ display:block; }
+    #genrow .header-center{ position:static; transform:none; display:flex; align-items:center; gap:8px; width:100%; }
+    #genrow select{ flex:1; min-width:0; }
+    /* action row scrolls horizontally */
+    #actrow{ flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+    #actrow::-webkit-scrollbar{ display:none; }
+    #actrow .spacer{ display:none; }
+    #actrow button{ flex:none; }
+    /* palette: columns become rows */
+    #strip{ flex-direction:column; min-height:0; }
+    .col{ flex-direction:row; align-items:center; justify-content:flex-start; gap:10px; padding:0 14px; min-height:56px; }
+    .col::after{ display:none; }
+    .col .hex{ font-size:16px; padding:2px 4px; }
+    .col .name{ margin:0; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left; }
+    .col .cr{ margin:0; }
+    .tools{ flex-direction:row; order:4; margin:0 0 0 auto; gap:6px; }
+    .tools button{ width:34px; height:34px; border-radius:9px; }
+    #toast{ bottom:140px; }
+    .modal{ padding:18px 16px; }
+  }
 </style>
 </head>
 <body>
@@ -255,13 +283,16 @@
 <div id="strip"></div>
 
 <div id="bottombar">
-  <button id="save">Guardar</button>
-  <button id="mine">Mis paletas</button>
-  <button id="contrast">Contraste</button>
-  <button id="preview">Vista previa</button>
-  <span class="spacer"></span>
-  <button id="export">Exportar</button>
-  <button id="share">Copiar enlace</button>
+  <div id="genrow"></div>
+  <div id="actrow">
+    <button id="save">Guardar</button>
+    <button id="mine">Mis paletas</button>
+    <button id="contrast">Contraste</button>
+    <button id="preview">Vista previa</button>
+    <span class="spacer"></span>
+    <button id="export">Exportar</button>
+    <button id="share">Copiar enlace</button>
+  </div>
 </div>
 
 <div class="ov" id="ov-shades"><div class="modal"><button class="x" data-x>✕</button><h2>Tonos <span id="sh-hex" style="opacity:.6;font-size:13px;font-family:var(--font-ui)"></span></h2><div id="shades"></div></div></div>
@@ -829,6 +860,23 @@ $('save').onclick=savePalette;
 $('mine').onclick=()=>{ renderMine(); $('ov-mine').classList.add('open'); };
 $('explore').onclick=()=>{ renderExplore(); $('ov-explore').classList.add('open'); };
 $('about').onclick=()=>{ $('help-pop').classList.remove('open'); $('ov-about').classList.add('open'); };
+/* ---- mobile relayout: generation group + creative pills move to the bottom bar ---- */
+const mqMobile=matchMedia('(max-width:640px)');
+function relayout(){
+  const hc=document.querySelector('.header-center'), hdr=document.querySelector('header');
+  if(mqMobile.matches){
+    $('genrow').appendChild(hc);
+    const ar=$('actrow');
+    ar.insertBefore($('explore'),ar.firstChild);
+    ar.insertBefore($('imgbtn'),ar.firstChild);
+    ar.insertBefore($('addcol'),ar.firstChild);
+  }else{
+    const spacers=hdr.querySelectorAll(':scope > .spacer'), help=$('helpbtn');
+    hdr.insertBefore(hc,spacers[1]);
+    hdr.insertBefore($('addcol'),help); hdr.insertBefore($('imgbtn'),help); hdr.insertBefore($('explore'),help);
+  }
+}
+(mqMobile.addEventListener?mqMobile.addEventListener('change',relayout):mqMobile.addListener(relayout)); relayout();
 $('helpbtn').onclick=e=>{ e.stopPropagation(); $('keys-pop').classList.remove('open'); $('help-pop').classList.toggle('open'); };
 $('mi-atajos').onclick=e=>{ e.stopPropagation(); $('help-pop').classList.remove('open'); $('keys-pop').classList.add('open'); };
 document.addEventListener('click',e=>{ for(const id of ['keys-pop','help-pop']){ const p=$(id);
