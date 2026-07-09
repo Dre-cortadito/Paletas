@@ -33,7 +33,7 @@
 
   header{ display:flex; align-items:center; gap:14px; height:var(--header-h); padding:0 22px;
     border-bottom:1px solid var(--ink-line); flex:none; background:var(--bg); }
-  .brand{ display:flex; align-items:center; gap:11px; margin-right:10px; }
+  .brand{ display:flex; align-items:center; gap:14px; margin-right:10px; }
   .brand svg{ width:36px; height:36px; display:block; }
   .wordmark{ margin:0; font:800 27px var(--font-display); letter-spacing:.2px; }
   .wordmark .dot{ color:var(--accent); }
@@ -45,17 +45,24 @@
   .iconbtn{ width:42px; height:42px; padding:0; display:inline-flex; align-items:center; justify-content:center; }
   .iconbtn svg{ width:19px; height:19px; display:block; }
   .spacer{ flex:1; }
-  .kbd{ display:flex; align-items:center; justify-content:center; gap:18px; flex:1; min-width:0;
-    font-size:12.5px; color:var(--ink-soft); font-weight:400; overflow:hidden; }
-  .kbd span{ display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
-  .kbd b{ background:var(--paper); border:1px solid var(--ink-line); border-radius:6px; padding:2.5px 9px;
-    font-weight:700; font-size:12px; color:var(--ink); box-shadow:0 1px 0 var(--ink-line); }
-  @media (max-width:980px){ .kbd{ gap:10px; } .kbd .opt{ display:none; } }
+  button.ghost{ background:transparent; border-color:transparent; color:var(--ink-soft); }
+  button.ghost:hover{ border-color:var(--ink-line); background:var(--paper); color:var(--ink); }
+  #keys-pop{ position:fixed; top:calc(var(--header-h) + 10px); right:16px; z-index:45; display:none;
+    background:var(--bg); border:1.5px solid var(--ink-line); border-radius:14px; padding:12px 16px;
+    box-shadow:0 12px 32px rgba(26,22,20,.16); min-width:250px; }
+  #keys-pop.open{ display:block; }
+  #keys-pop div{ display:flex; align-items:center; justify-content:space-between; gap:20px; padding:5.5px 0;
+    font-size:13px; color:var(--ink-soft); }
+  #keys-pop b{ background:var(--paper); border:1px solid var(--ink-line); border-radius:6px; padding:2.5px 9px;
+    font-weight:700; font-size:12px; color:var(--ink); box-shadow:0 1px 0 var(--ink-line); white-space:nowrap; }
 
   /* ===== la paleta ===== */
   #strip{ flex:1; display:flex; min-height:340px; }
   .col{ flex:1; position:relative; display:flex; flex-direction:column; justify-content:flex-end; align-items:center;
     padding:18px 6px calc(18px + env(safe-area-inset-bottom)); cursor:pointer; min-width:0; }
+  .col::after{ content:''; position:absolute; left:0; right:0; bottom:0; height:130px; pointer-events:none;
+    background:linear-gradient(to top, rgba(0,0,0,.14), transparent); }
+  .col>*{ position:relative; z-index:1; }
   .col .hex{ font:800 clamp(13px,2.4vw,19px) var(--font-ui); letter-spacing:.5px; text-transform:uppercase;
     background:transparent; border:none; color:inherit; padding:4px 6px; border-radius:7px; cursor:pointer; font-variant-numeric:tabular-nums; }
   .col .hex:hover{ background:rgba(127,127,127,.18); }
@@ -114,8 +121,13 @@
   .ab-idea{ background:var(--accent-soft); border-radius:12px; padding:13px 18px; font:italic 600 15px var(--font-display); margin:14px 0 4px; }
   #ab-expert{ display:none; margin-top:6px; }
   #ab-expert.open{ display:block; }
-  .ab-tech td{ padding:4px 10px 4px 0; font:12px ui-monospace,Menlo,monospace; vertical-align:top; }
-  .ab-tech td:first-child{ font-weight:700; white-space:nowrap; }
+  .ab-tech{ width:100%; border-collapse:collapse; margin-top:10px; }
+  .ab-tech th{ text-align:left; font:800 11px var(--font-ui); text-transform:uppercase; letter-spacing:.6px;
+    color:var(--ink-soft); padding:6px 10px; border-bottom:1.5px solid var(--ink-line); }
+  .ab-tech td{ padding:6px 10px; font:12px ui-monospace,Menlo,monospace; vertical-align:top; border-bottom:1px solid var(--ink-line); }
+  .ab-tech td:first-child{ font:700 12.5px var(--font-ui); white-space:nowrap; }
+  .ab-tech tbody tr:nth-child(odd) td{ background:var(--paper); }
+  .ab-tech tbody tr:last-child td{ border-bottom:none; }
   .ab-toggle{ width:100%; margin-top:8px; }
   @media (max-width:560px){ .ab-modes{ grid-template-columns:1fr; } }
 
@@ -168,7 +180,7 @@
     font:800 13px var(--font-ui); letter-spacing:.4px; padding:8px 16px; border-radius:999px; opacity:0;
     transition:opacity .18s; pointer-events:none; z-index:99; box-shadow:0 6px 18px rgba(0,0,0,.18); }
   #toast.show{ opacity:1; }
-  @media (max-width:640px){ .kbd{ display:none; } header{ gap:8px; } .wordmark{ font-size:19px; } }
+  @media (max-width:640px){ header{ gap:8px; } .wordmark{ font-size:19px; } #keysbtn{ display:none; } }
 </style>
 </head>
 <body>
@@ -183,6 +195,7 @@
     </svg>
     <h1 class="wordmark">Paletas<span class="dot">.</span></h1>
   </span>
+  <span class="spacer"></span>
   <select id="mode" title="Modo de generación">
     <option value="smart">Aleatorio listo</option>
     <option value="analogo">Análogo</option>
@@ -198,30 +211,33 @@
     <!-- icono compartido: _shared/icons/restart.svg (espejado = deshacer) -->
     <svg viewBox="0 0 24 24" fill="currentColor" style="transform:scaleX(-1)"><path d="M12 5V2L6 7l6 5V8.5c3 0 5.5 2.5 5.5 5.5S15 19.5 12 19.5 6.5 17 6.5 14H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z"/></svg>
   </button>
-  <span class="kbd">
-    <span><b>Espacio</b> genera</span>
-    <span><b>1–8</b> candado</span>
-    <span><b>S</b> guarda</span>
-    <span class="opt"><b>E</b> exporta</span>
-    <span class="opt"><b>Z</b> deshace</span>
-    <span class="opt"><b>clic en el código</b> edita el color</span>
-  </span>
+  <span class="spacer"></span>
   <button id="addcol" title="Añadir color">+ color</button>
   <button id="imgbtn" title="Extraer de una imagen">De imagen</button>
+  <button id="keysbtn" class="ghost" title="Atajos de teclado">Atajos</button>
   <input type="file" id="imgfile" accept="image/*" hidden>
 </header>
+
+<div id="keys-pop">
+  <div><span>Genera</span><b>Espacio</b></div>
+  <div><span>Candado por columna</span><b>1–8</b></div>
+  <div><span>Guarda</span><b>S</b></div>
+  <div><span>Exporta</span><b>E</b></div>
+  <div><span>Deshace</span><b>Z</b></div>
+  <div><span>Edita el color</span><b>clic en el código</b></div>
+</div>
 
 <div id="strip"></div>
 
 <div id="bottombar">
-  <button id="save">Guardar (S)</button>
-  <button id="mine">Mis paletas</button>
-  <button id="contrast">Contraste</button>
-  <button id="preview">Vista previa</button>
-  <button id="export">Exportar (E)</button>
-  <button id="about">Acerca de</button>
+  <button id="save" class="ghost">Guardar</button>
+  <button id="mine" class="ghost">Mis paletas</button>
+  <button id="contrast" class="ghost">Contraste</button>
+  <button id="preview" class="ghost">Vista previa</button>
+  <button id="export" class="ghost">Exportar</button>
+  <button id="about" class="ghost">Acerca de</button>
   <span class="spacer"></span>
-  <button id="share">Copiar enlace</button>
+  <button id="share" class="ghost">Copiar enlace</button>
   <button id="explore" class="explore-btn">Explorar</button>
 </div>
 
@@ -241,35 +257,36 @@
 
 <div class="ov" id="ov-about"><div class="modal">
   <button class="x" data-x>✕</button><h2>Acerca de Paletas</h2>
-  <p class="ab-lead">Paletas no elige cinco colores al azar. Construye cada paleta dentro de una estructura de diseño — tira los dados, pero solo dentro de reglas que ya saben qué hace usable una paleta.</p>
+  <p class="ab-lead">Paletas no elige cinco colores al azar. Construye cada paleta dentro de una estructura de diseño: luz, contraste, armonía y uso real.</p>
 
   <div class="ab-sec" style="border-left-color:#D85A30">
     <h3><i style="background:#D85A30"></i>Primero: una escalera de luz</h3>
-    <p>Antes de pensar en colores, el generador reparte los <b>niveles de claridad</b>: uno oscuro, uno claro y varios tonos medios. Por eso casi toda paleta trae un color que sirve de <b>fondo</b>, otro que sirve de <b>texto</b> y acentos que conviven — en vez de cinco colores peleándose por el mismo lugar.</p>
+    <p>Antes de escoger los tonos, el generador reparte <b>niveles de claridad</b>: un color oscuro, uno claro y varios tonos medios. Por eso muchas paletas ya traen algo que puede servir como <b>fondo</b>, algo que puede servir como <b>texto</b> y acentos que conviven bien entre sí.</p>
     <div class="ab-ladder"><i style="background:#241f1c"></i><i style="background:#6b5d52"></i><i style="background:#a9988a"></i><i style="background:#d8cabb"></i><i style="background:#f4ede4"></i></div>
   </div>
 
   <div class="ab-sec" style="border-left-color:#F9C80E">
-    <h3><i style="background:#F9C80E"></i>Después: la relación entre tonos</h3>
-    <p>Cada modo decide <b>cómo se reparten los colores en la rueda</b>:</p>
+    <h3><i style="background:#F9C80E"></i>Después: la relación entre colores</h3>
+    <p>Cada modo decide <b>cómo se reparten los tonos en la rueda de color</b>:</p>
     <ul class="ab-modes">
-      <li><b>Aleatorio listo</b> — se esparcen por la rueda para no amontonarse.</li>
-      <li><b>Análogo</b> — vecinos cercanos: calma.</li>
-      <li><b>Complementario</b> — dos bandos opuestos: contraste.</li>
+      <li><b>Aleatorio listo</b> — colores bien separados para que no se amontonen.</li>
+      <li><b>Análogo</b> — tonos vecinos para una sensación más tranquila.</li>
+      <li><b>Complementario</b> — colores opuestos para más contraste.</li>
       <li><b>Triádico</b> — tres familias equilibradas.</li>
-      <li><b>Monocromo</b> — un solo tono, del oscuro al claro.</li>
-      <li><b>Pastel / Vibrante / Profundo</b> — ajustan brillo e intensidad para un ánimo concreto.</li>
+      <li><b>Monocromo</b> — un solo tono, desde oscuro hasta claro.</li>
+      <li><b>Pastel, Vibrante y Profundo</b> — ajustan claridad e intensidad para crear un ánimo específico.</li>
     </ul>
     <div class="ab-wheel"><i style="background:#d85a30"></i><i style="background:#b8a12c"></i><i style="background:#3fa06b"></i><i style="background:#4a7fc9"></i><i style="background:#9a5bb5"></i></div>
-    <p style="color:var(--ink-soft);font-size:12px">Si tienes un color con candado, los modos de armonía se construyen <b>alrededor de ese color</b>.</p>
+    <p style="color:var(--ink-soft);font-size:12px">Si tienes un color con candado, los modos se construyen <b>alrededor de ese color</b>.</p>
   </div>
 
   <div class="ab-sec" style="border-left-color:#4ECDC4">
-    <h3><i style="background:#4ECDC4"></i>Por dentro: un espacio de color honesto</h3>
-    <p>El motor trabaja en <b>OKLCH</b>, un sistema de color que se parece más a cómo <b>ve el ojo humano</b> que el RGB de siempre. Así, cuando el generador pide «uno claro y uno oscuro», el resultado realmente se ve así. Y si un color es demasiado intenso para tu pantalla, la app le baja <b>solo la intensidad</b> — sin traicionar el tono ni el brillo que quería.</p>
+    <h3><i style="background:#4ECDC4"></i>Por dentro: un color más honesto</h3>
+    <p>Paletas trabaja en <b>OKLCH</b>, un espacio de color que se acerca más a cómo percibe el ojo humano. Eso ayuda a que un color claro realmente se vea claro, que uno oscuro se vea oscuro, y que las paletas tengan mejor balance visual.</p>
+    <p>Cuando un color es demasiado intenso para mostrarse bien en pantalla, Paletas reduce <b>solo su intensidad</b>. Mantiene el tono y la claridad lo más fieles posible.</p>
   </div>
 
-  <div class="ab-idea">La idea simple: los dados caen siempre dentro de una estructura que ya entiende qué hace funcionar una paleta.</div>
+  <div class="ab-idea">La idea simple: no son colores tirados al azar; son colores generados dentro de una estructura pensada para que la paleta funcione.</div>
 
   <button class="ab-toggle" id="ab-toggle">Para expertos · lo técnico ▾</button>
   <div id="ab-expert">
@@ -277,18 +294,21 @@
       <h3><i style="background:#662E9B"></i>El motor, en detalle</h3>
       <p><b>Espacio de color.</b> Todo se genera en OKLCH (la forma polar de OKLab, Björn&nbsp;Ottosson 2020): L = claridad perceptual 0–1, C = croma, H = ángulo de tono. La conversión pasa por sRGB lineal → LMS → OKLab. A diferencia de HSL, dos colores con la misma L <b>se ven</b> igual de claros, lo que hace fiables la escalera de luz y las decisiones de contraste.</p>
       <p><b>Escalera de L.</b> Base <span style="font-family:ui-monospace,monospace">[0.28, 0.45, 0.62, 0.78, 0.90]</span>, interpolada al número de columnas, con ruido ±0.04 y orden barajado. Garantiza extremos utilizables (texto/fondo) en casi toda tirada.</p>
-      <p><b>Dispersión de tonos.</b> El modo aleatorio avanza por el <b>ángulo áureo</b> (137.508°): al ser irracional respecto a 360°, n saltos nunca caen cerca — el mismo truco de las semillas del girasol. Los modos de armonía fijan offsets (±18° análogo, 180° complementario, 120° triádico) con jitter para que no se sientan mecánicos.</p>
+      <p><b>Dispersión de tonos.</b> El modo aleatorio avanza por el <b>ángulo áureo</b> (137.508°): al ser irracional respecto a 360°, n saltos nunca caen cerca — el mismo truco de las semillas del girasol. Los modos de armonía fijan offsets con jitter para que no se sientan mecánicos.</p>
       <p><b>Recorte de gamut.</b> Si (L,C,H) cae fuera de sRGB, una búsqueda binaria de 18 pasos reduce solo C hasta el borde del gamut. L y H se conservan: el color pierde saturación, nunca cambia de intención.</p>
       <table class="ab-tech">
-        <tr><td>pastel</td><td>C 0.03–0.065 · L 0.84–0.93</td></tr>
-        <tr><td>vibrante</td><td>C 0.16–0.26 · L 0.55–0.72</td></tr>
-        <tr><td>profundo</td><td>C 0.05–0.13 · L 0.22–0.45</td></tr>
-        <tr><td>análogo</td><td>H₀ ± pasos de 14–22° · C 0.07–0.16</td></tr>
-        <tr><td>complementario</td><td>alterna H₀ / H₀+180° ± 14°</td></tr>
-        <tr><td>triádico</td><td>H₀ + {0°, 120°, 240°} ± 12°</td></tr>
-        <tr><td>monocromo</td><td>H₀ ± 5° · L barrida 0.20→0.92</td></tr>
+        <thead><tr><th>Modo</th><th>Reglas</th></tr></thead>
+        <tbody>
+          <tr><td>Pastel</td><td>C 0.03–0.065 · L 0.84–0.93</td></tr>
+          <tr><td>Vibrante</td><td>C 0.16–0.26 · L 0.55–0.72</td></tr>
+          <tr><td>Profundo</td><td>C 0.05–0.13 · L 0.22–0.45</td></tr>
+          <tr><td>Análogo</td><td>H₀ ± pasos de 14–22° · C 0.07–0.16</td></tr>
+          <tr><td>Complementario</td><td>alterna H₀ / H₀+180° ± 14°</td></tr>
+          <tr><td>Triádico</td><td>H₀ + {0°, 120°, 240°} ± 12°</td></tr>
+          <tr><td>Monocromo</td><td>H₀ ± 5° · L barrida 0.20→0.92</td></tr>
+        </tbody>
       </table>
-      <p style="margin-top:8px"><b>Contraste.</b> Cada columna calcula su texto ideal (negro o blanco) por luminancia relativa WCAG y muestra el ratio; la matriz de Contraste evalúa los 20 pares con umbrales AA (4.5), AA-grande (3) y AAA (7).</p>
+      <p style="margin-top:10px"><b>Contraste.</b> Cada columna calcula su texto ideal (negro o blanco) por luminancia relativa WCAG y muestra el ratio; la matriz de Contraste evalúa todos los pares con umbrales AA (4.5), AA-grande (3) y AAA (7).</p>
       <p><b>De imagen.</b> K-means (k = nº de columnas, 12 iteraciones) sobre una miniatura de 72×72, con centroides ordenados por L para que la paleta salga en escalera.</p>
       <p><b>Estado.</b> La paleta vive en el hash de la URL (compartir = copiar enlace), el historial de deshacer guarda hasta 80 pasos, y «Mis paletas» usa localStorage — nada sale de tu equipo.</p>
     </div>
@@ -786,6 +806,9 @@ $('save').onclick=savePalette;
 $('mine').onclick=()=>{ renderMine(); $('ov-mine').classList.add('open'); };
 $('explore').onclick=()=>{ renderExplore(); $('ov-explore').classList.add('open'); };
 $('about').onclick=()=>$('ov-about').classList.add('open');
+$('keysbtn').onclick=e=>{ e.stopPropagation(); $('keys-pop').classList.toggle('open'); };
+document.addEventListener('click',e=>{ const p=$('keys-pop'); if(p.classList.contains('open') && !p.contains(e.target) && e.target.id!=='keysbtn') p.classList.remove('open'); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') $('keys-pop').classList.remove('open'); });
 $('ab-toggle').onclick=()=>{ const x=$('ab-expert'); x.classList.toggle('open'); $('ab-toggle').textContent=x.classList.contains('open')?'Para expertos · lo técnico ▴':'Para expertos · lo técnico ▾'; };
 $('ex-more').onclick=()=>{ for(let k=0;k<12;k++) exGenerated.push(genThemed(exCat)); renderExplore(); $('ex-list').scrollTop=$('ex-list').scrollHeight; };
 $('contrast').onclick=()=>{ renderMatrix(); $('ov-contrast').classList.add('open'); };
