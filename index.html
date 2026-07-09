@@ -241,7 +241,6 @@
 <div id="help-pop">
   <button id="mi-atajos">Atajos de teclado</button>
   <button id="about">Acerca de Paletas</button>
-  <button id="mi-tech">Lo técnico</button>
 </div>
 
 <div id="keys-pop">
@@ -832,9 +831,6 @@ $('explore').onclick=()=>{ renderExplore(); $('ov-explore').classList.add('open'
 $('about').onclick=()=>{ $('help-pop').classList.remove('open'); $('ov-about').classList.add('open'); };
 $('helpbtn').onclick=e=>{ e.stopPropagation(); $('keys-pop').classList.remove('open'); $('help-pop').classList.toggle('open'); };
 $('mi-atajos').onclick=e=>{ e.stopPropagation(); $('help-pop').classList.remove('open'); $('keys-pop').classList.add('open'); };
-$('mi-tech').onclick=()=>{ $('help-pop').classList.remove('open'); $('ov-about').classList.add('open');
-  const x=$('ab-expert'); x.classList.add('open'); $('ab-toggle').textContent='Para expertos · lo técnico ▴';
-  requestAnimationFrame(()=>x.scrollIntoView({behavior:'smooth',block:'start'})); };
 document.addEventListener('click',e=>{ for(const id of ['keys-pop','help-pop']){ const p=$(id);
   if(p.classList.contains('open') && !p.contains(e.target) && e.target.id!=='helpbtn') p.classList.remove('open'); } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ $('keys-pop').classList.remove('open'); $('help-pop').classList.remove('open'); } });
