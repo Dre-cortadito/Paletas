@@ -97,6 +97,17 @@
   .cmx .sw{ width:18px; height:18px; border-radius:5px; display:inline-block; vertical-align:middle; border:1px solid var(--ink-line); }
   .cmx .aa{ font-weight:800; }
 
+  /* explorar */
+  #ex-chips{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  #ex-chips button{ padding:6px 13px; font-size:12.5px; }
+  #ex-chips button.on{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  #ex-list{ max-height:56dvh; overflow:auto; padding-right:2px; }
+  .ex-row{ display:flex; align-items:center; gap:10px; padding:7px 0; }
+  .ex-row .mini{ display:flex; flex:1; height:44px; border-radius:10px; overflow:hidden; cursor:pointer; border:1px solid var(--ink-line); transition:transform .08s; }
+  .ex-row .mini:hover{ transform:scale(1.012); }
+  .ex-row .mini i{ flex:1; }
+  .ex-row small{ color:var(--ink-soft); min-width:86px; text-align:right; font-size:11px; }
+
   /* guardadas */
   .saved-row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--ink-line); }
   .saved-row .mini{ display:flex; flex:1; height:34px; border-radius:8px; overflow:hidden; cursor:pointer; border:1px solid var(--ink-line); }
@@ -179,6 +190,7 @@
 <div id="bottombar">
   <button id="save">Guardar (S)</button>
   <button id="mine">Mis paletas</button>
+  <button id="explore">Explorar</button>
   <button id="contrast">Contraste</button>
   <button id="preview">Vista previa</button>
   <button id="export">Exportar (E)</button>
@@ -198,6 +210,13 @@
     <button class="primary" id="ex-copy">Copiar</button>
     <button id="ex-png">Descargar PNG</button>
   </div>
+</div></div>
+
+<div class="ov" id="ov-explore"><div class="modal" style="width:min(560px,96vw)">
+  <button class="x" data-x>✕</button><h2>Explorar</h2>
+  <div id="ex-chips"></div>
+  <div id="ex-list"></div>
+  <div style="display:flex;justify-content:center;margin-top:12px"><button id="ex-more">Cargar más</button></div>
 </div></div>
 
 <div class="ov" id="ov-contrast"><div class="modal"><button class="x" data-x>✕</button><h2>Contraste (WCAG)</h2>
@@ -441,6 +460,158 @@ function fromImage(file){ const img=new Image();
     pushHistory(); render(); toast('Paleta extraída'); URL.revokeObjectURL(img.src); };
   img.src=URL.createObjectURL(file); }
 
+/* ================= explorar (galería curada + generación temática) ================= */
+const EXPLORE=[
+// tendencia — UI moderna
+{g:'tendencia',p:['#0f172a','#3b82f6','#93c5fd','#f1f5f9','#f97316']},
+{g:'tendencia',p:['#111827','#6366f1','#a5b4fc','#e0e7ff','#fbbf24']},
+{g:'tendencia',p:['#18181b','#22c55e','#bbf7d0','#fafafa','#171717']},
+{g:'tendencia',p:['#1c1917','#e11d48','#fda4af','#fff1f2','#0ea5e9']},
+{g:'tendencia',p:['#0c0a09','#eab308','#fef08a','#fafaf9','#57534e']},
+{g:'tendencia',p:['#052e16','#10b981','#6ee7b7','#ecfdf5','#facc15']},
+{g:'tendencia',p:['#1e1b4b','#8b5cf6','#c4b5fd','#f5f3ff','#f43f5e']},
+{g:'tendencia',p:['#164e63','#06b6d4','#67e8f9','#ecfeff','#f59e0b']},
+{g:'tendencia',p:['#0a0a0a','#fafafa','#d4d4d4','#737373','#dc2626']},
+{g:'tendencia',p:['#134e4a','#14b8a6','#99f6e4','#f0fdfa','#fb7185']},
+// pastel
+{g:'pastel',p:['#fde2e4','#fad2e1','#e2ece9','#bee1e6','#cddafd']},
+{g:'pastel',p:['#f8edeb','#fcd5ce','#fae1dd','#e8e8e4','#d8e2dc']},
+{g:'pastel',p:['#e0fbfc','#c2dfe3','#9db4c0','#fce8e6','#f7d6e0']},
+{g:'pastel',p:['#fff1e6','#fde2e4','#e2ece9','#dfe7fd','#cddafd']},
+{g:'pastel',p:['#e9f5db','#cfe1b9','#b5c99a','#f6e7cb','#f2d0a9']},
+{g:'pastel',p:['#f3d5b5','#f2e5d7','#d6e5e3','#9fd8cb','#c7bbc9']},
+{g:'pastel',p:['#e4c1f9','#fcf6bd','#d0f4de','#a9def9','#ff99c8']},
+{g:'pastel',p:['#fad2cf','#fce8b2','#d4edbc','#c6dbf7','#e3d1f4']},
+{g:'pastel',p:['#faf3dd','#c8d5b9','#8fc0a9','#68b0ab','#696d7d']},
+{g:'pastel',p:['#eddcd2','#fff1e6','#fde2e4','#fad2e1','#c5dedd']},
+// tierra / otoño
+{g:'tierra',p:['#582f0e','#7f4f24','#936639','#a68a64','#b6ad90']},
+{g:'tierra',p:['#606c38','#283618','#fefae0','#dda15e','#bc6c25']},
+{g:'tierra',p:['#780000','#c1121f','#fdf0d5','#003049','#669bbc']},
+{g:'tierra',p:['#4a4238','#8b5e34','#c8963e','#e3c16f','#f2e3bc']},
+{g:'tierra',p:['#6f1d1b','#bb9457','#432818','#99582a','#ffe6a7']},
+{g:'tierra',p:['#3d2b1f','#7d5a44','#b08968','#ddb892','#ede0d4']},
+{g:'tierra',p:['#3a5a40','#588157','#a3b18a','#dad7cd','#344e41']},
+{g:'tierra',p:['#5f0f40','#9a031e','#fb8b24','#e36414','#0f4c5c']},
+{g:'tierra',p:['#797d62','#9b9b7a','#d9ae94','#f1dca7','#ffcb69']},
+{g:'tierra',p:['#233d4d','#fe7f2d','#fcca46','#a1c181','#619b8a']},
+// océano / playa
+{g:'océano',p:['#03045e','#0077b6','#00b4d8','#90e0ef','#caf0f8']},
+{g:'océano',p:['#014f86','#2a6f97','#468faf','#89c2d9','#a9d6e5']},
+{g:'océano',p:['#e0fbfc','#98c1d9','#3d5a80','#293241','#ee6c4d']},
+{g:'océano',p:['#006d77','#83c5be','#edf6f9','#ffddd2','#e29578']},
+{g:'océano',p:['#1a535c','#4ecdc4','#f7fff7','#ffe66d','#ff6b6b']},
+{g:'océano',p:['#22577a','#38a3a5','#57cc99','#80ed99','#c7f9cc']},
+{g:'océano',p:['#0b132b','#1c2541','#3a506b','#5bc0be','#6fffe9']},
+{g:'océano',p:['#f1faee','#a8dadc','#457b9d','#1d3557','#e63946']},
+{g:'océano',p:['#05668d','#028090','#00a896','#02c39a','#f0f3bd']},
+{g:'océano',p:['#cae9ff','#84b6f4','#5a8fd6','#2d5f9e','#0f3e69']},
+// retro / vintage
+{g:'retro',p:['#ef476f','#ffd166','#06d6a0','#118ab2','#073b4c']},
+{g:'retro',p:['#d62828','#f77f00','#fcbf49','#eae2b7','#003049']},
+{g:'retro',p:['#e07a5f','#3d405b','#81b29a','#f2cc8f','#f4f1de']},
+{g:'retro',p:['#ffb997','#f67e7d','#843b62','#0b032d','#74546a']},
+{g:'retro',p:['#ff9f1c','#ffbf69','#ffffff','#cbf3f0','#2ec4b6']},
+{g:'retro',p:['#band','#band','#band','#band','#band']},
+{g:'retro',p:['#8ecae6','#219ebc','#023047','#ffb703','#fb8500']},
+{g:'retro',p:['#f6bd60','#f7ede2','#f5cac3','#84a59d','#f28482']},
+{g:'retro',p:['#cb997e','#ddbea9','#ffe8d6','#b7b7a4','#6b705c']},
+{g:'retro',p:['#003844','#006c67','#f194b4','#ffb100','#ffebc6']},
+// oscuro / noche
+{g:'oscuro',p:['#2e3440','#3b4252','#434c5e','#4c566a','#88c0d0']},
+{g:'oscuro',p:['#282828','#3c3836','#b8bb26','#fabd2f','#fb4934']},
+{g:'oscuro',p:['#282a36','#44475a','#bd93f9','#ff79c6','#50fa7b']},
+{g:'oscuro',p:['#1e1e2e','#89b4fa','#f5c2e7','#a6e3a1','#cdd6f4']},
+{g:'oscuro',p:['#002b36','#073642','#586e75','#93a1a1','#b58900']},
+{g:'oscuro',p:['#0d1b2a','#1b263b','#415a77','#778da9','#e0e1dd']},
+{g:'oscuro',p:['#10002b','#3c096c','#5a189a','#9d4edd','#e0aaff']},
+{g:'oscuro',p:['#161a1d','#660708','#a4161a','#ba181b','#e5383b']},
+{g:'oscuro',p:['#111d13','#1e441e','#2a7221','#119822','#31cb00']},
+{g:'oscuro',p:['#01161e','#124559','#598392','#aec3b0','#eff6e0']},
+// neón
+{g:'neón',p:['#ff006e','#fb5607','#ffbe0b','#8338ec','#3a86ff']},
+{g:'neón',p:['#f72585','#7209b7','#3a0ca3','#4361ee','#4cc9f0']},
+{g:'neón',p:['#ccff33','#9ef01a','#38b000','#007200','#004b23']},
+{g:'neón',p:['#ff0a54','#ff477e','#ff7096','#ff99ac','#fbb1bd']},
+{g:'neón',p:['#2d00f7','#8900f2','#bc00dd','#e500a4','#f20089']},
+{g:'neón',p:['#04e762','#f5b700','#dc0073','#008bf8','#89fc00']},
+{g:'neón',p:['#001219','#00f5d4','#00bbf9','#fee440','#f15bb5']},
+{g:'neón',p:['#0b090a','#e01e37','#ef27a6','#7161ef','#38b6ff']},
+// café (cortadito)
+{g:'café',p:['#1a1614','#4a3428','#8a5a44','#c49a7a','#fbfaf6']},
+{g:'café',p:['#3e2723','#5d4037','#8d6e63','#d7ccc8','#efebe9']},
+{g:'café',p:['#2d1b12','#6f4e37','#a67b5b','#ecb176','#fed8b1']},
+{g:'café',p:['#402e32','#7d5a50','#b4846c','#e5b299','#fcdec0']},
+{g:'café',p:['#312520','#654321','#996633','#cc9966','#f5deb3']},
+{g:'café',p:['#231709','#493b2a','#8b7355','#c8b088','#f0e6d2']},
+// bosque
+{g:'bosque',p:['#132a13','#31572c','#4f772d','#90a955','#ecf39e']},
+{g:'bosque',p:['#081c15','#1b4332','#2d6a4f','#52b788','#d8f3dc']},
+{g:'bosque',p:['#283618','#606c38','#a3b18a','#dad7cd','#fefae0']},
+{g:'bosque',p:['#04471c','#058c42','#16db65','#efea5a','#f29e4c']},
+{g:'bosque',p:['#143601','#245501','#538d22','#73a942','#aad576']},
+{g:'bosque',p:['#333d29','#414833','#656d4a','#a4ac86','#c2c5aa']},
+// rosa
+{g:'rosa',p:['#590d22','#800f2f','#c9184a','#ff758f','#ffccd5']},
+{g:'rosa',p:['#ffe0e9','#ffc2d4','#ff9ebb','#ff7aa2','#e05780']},
+{g:'rosa',p:['#f7cad0','#f9bec7','#fbb1bd','#ff99ac','#ff85a1']},
+{g:'rosa',p:['#281914','#754043','#9a031e','#d05353','#f3b3a6']},
+{g:'rosa',p:['#fdf0f0','#f8c8dc','#f4a6c6','#e26aa5','#a1477e']},
+// atardecer
+{g:'atardecer',p:['#03071e','#6a040f','#dc2f02','#f48c06','#ffba08']},
+{g:'atardecer',p:['#355070','#6d597a','#b56576','#e56b6f','#eaac8b']},
+{g:'atardecer',p:['#ff7b00','#ff9500','#ffb700','#ffd000','#ffea00']},
+{g:'atardecer',p:['#4c1d3d','#c62368','#fa7268','#ff9e7d','#ffd0a1']},
+{g:'atardecer',p:['#5e2f5e','#a23b72','#f18f01','#c73e1d','#3b1f2b']},
+{g:'atardecer',p:['#231942','#5e548e','#9f86c0','#be95c4','#e0b1cb']},
+// minimal
+{g:'minimal',p:['#ffffff','#f5f5f5','#e5e5e5','#525252','#171717']},
+{g:'minimal',p:['#fbfaf6','#ece7df','#8a847f','#1a1614','#d85a30']},
+{g:'minimal',p:['#f8f9fa','#dee2e6','#adb5bd','#495057','#212529']},
+{g:'minimal',p:['#ffffff','#e0e0e0','#9e9e9e','#424242','#0d47a1']},
+{g:'minimal',p:['#faf9f7','#e8e6e1','#b8b2a7','#57534e','#292524']},
+// marca / bold
+{g:'marca',p:['#d85a30','#f9c80e','#4ecdc4','#662e9b','#1a1614']},
+{g:'marca',p:['#ea3546','#662e9b','#f86624','#f9c80e','#43bccd']},
+{g:'marca',p:['#0081a7','#00afb9','#fdfcdc','#fed9b7','#f07167']},
+{g:'marca',p:['#390099','#9e0059','#ff0054','#ff5400','#ffbd00']},
+{g:'marca',p:['#006ba6','#0496ff','#ffbc42','#d81159','#8f2d56']},
+{g:'marca',p:['#0d3b66','#faf0ca','#f4d35e','#ee964b','#f95738']}
+].filter(x=>x.p[0]!=='#band');
+const EX_CATS=['todas','tendencia','pastel','tierra','océano','retro','oscuro','neón','café','bosque','rosa','atardecer','minimal','marca'];
+let exCat='todas', exSeed=1, exGenerated=[];
+function exRng(){ exSeed=(exSeed*1103515245+12345)&0x7fffffff; return exSeed/0x7fffffff; }
+// recetas OKLCH por categoría para el flujo infinito de «Cargar más»
+function genThemed(cat){ const r=exRng, H0=r()*360, GOLD=137.508, out=[];
+  for(let i=0;i<5;i++){ let L,C,H=(H0+i*GOLD)%360;
+    switch(cat){
+      case 'pastel': L=.86+r()*.08; C=.03+r()*.04; break;
+      case 'tierra': H=(30+r()*60+i*18)%360; L=.3+i*.15+r()*.06; C=.05+r()*.06; break;
+      case 'océano': H=200+r()*60-30+i*10; L=.3+i*.15; C=.06+r()*.08; break;
+      case 'oscuro': L=.18+r()*.25; C=.04+r()*.09; break;
+      case 'neón': L=.6+r()*.15; C=.22+r()*.08; break;
+      case 'café': H=(45+r()*30+i*6)%360; L=.16+i*.18; C=.03+r()*.05; break;
+      case 'bosque': H=(120+r()*40-20+i*8)%360; L=.25+i*.16; C=.05+r()*.08; break;
+      case 'rosa': H=(345+r()*35+i*6)%360; L=.35+i*.14; C=.08+r()*.09; break;
+      case 'atardecer': H=(20+i*22+r()*14)%360; L=.3+i*.15; C=.12+r()*.1; break;
+      case 'minimal': H=H0; L=.15+i*.2; C=(i===4?.12:.008+r()*.015); break;
+      case 'retro': L=.45+r()*.35; C=.1+r()*.1; break;
+      case 'marca': L=.5+r()*.25; C=.15+r()*.1; break;
+      default: L=[.28,.45,.62,.78,.9][i]+r()*.06-.03; C=.05+r()*.15;
+    }
+    out.push(oklchHex(Math.max(.1,Math.min(.97,L)),C,((H%360)+360)%360)); }
+  return out; }
+function exRows(){ const cur=EXPLORE.filter(x=>exCat==='todas'||x.g===exCat).map(x=>({p:x.p,g:x.g}));
+  return cur.concat(exGenerated.map(p=>({p,g:exCat==='todas'?'generada':exCat}))); }
+function renderExplore(){
+  $('ex-chips').innerHTML=EX_CATS.map(c=>'<button data-c="'+c+'" class="'+(c===exCat?'on':'')+'">'+c+'</button>').join('');
+  $('ex-chips').querySelectorAll('button').forEach(b=>b.onclick=()=>{ exCat=b.dataset.c; exGenerated=[]; renderExplore(); });
+  const box=$('ex-list');
+  box.innerHTML=exRows().map((row,i)=>'<div class="ex-row"><div class="mini" data-i="'+i+'" title="Usar esta paleta">'+
+    row.p.map(h=>'<i style="background:'+h+'"></i>').join('')+'</div><small>'+row.g+'</small></div>').join('');
+  box.querySelectorAll('.mini').forEach(m=>m.onclick=()=>{ const row=exRows()[+m.dataset.i];
+    colors=row.p.map(h=>({hex:h.toLowerCase(),locked:false})); pushHistory(); render(); closeOvs(); toast('Paleta cargada'); }); }
+
 /* ================= selector de color (picker) ================= */
 function hsv2rgb(h,s,v){ h=(((h%360)+360)%360)/60; const c=v*s, x=c*(1-Math.abs(h%2-1)), m=v-c;
   const t=[[c,x,0],[x,c,0],[0,c,x],[0,x,c],[x,0,c],[c,0,x]][Math.floor(h)%6];
@@ -530,6 +701,8 @@ $('mode').onchange=e=>{ mode=e.target.value; };
 $('addcol').onclick=()=>{ if(colors.length<MAXC){ colors.push({hex:genHexes(colors.length+1)[colors.length],locked:false}); pushHistory(); render(); } };
 $('save').onclick=savePalette;
 $('mine').onclick=()=>{ renderMine(); $('ov-mine').classList.add('open'); };
+$('explore').onclick=()=>{ renderExplore(); $('ov-explore').classList.add('open'); };
+$('ex-more').onclick=()=>{ for(let k=0;k<12;k++) exGenerated.push(genThemed(exCat)); renderExplore(); $('ex-list').scrollTop=$('ex-list').scrollHeight; };
 $('contrast').onclick=()=>{ renderMatrix(); $('ov-contrast').classList.add('open'); };
 $('preview').onclick=()=>{ renderPreview(); $('ov-preview').classList.add('open'); };
 $('pv-flip').onclick=()=>{ pvDark=!pvDark; renderPreview(); };
