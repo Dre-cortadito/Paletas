@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Paletas · Cortadito News</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Newsreader:ital,wght@0,400..800;1,400..800&display=swap" rel="stylesheet">
+<!-- ============================================================
+  PALETAS — herramienta de paletas estilo Coolors, pero:
+   · todo gratis, todo local (localStorage), sin cuenta
+   · motor de color OKLCH → paletas perceptualmente parejas
+   · modos de armonía (análogo, complementario, triádico, mono…)
+   · contraste WCAG en cada color + matriz completa
+   · exporta: CSS vars, Tailwind, JSON, PNG, enlace
+   · paleta desde imagen (k-means)
+   · teclado: Espacio genera, 1-8 candados, S guarda, E exporta
+   · un solo archivo, funciona sin conexión (fuentes con fallback)
+  Estética Cortadito: paper/ink + Newsreader, logo 2×2 tipo Palabreo.
+  ============================================================ -->
+<style>
+  :root{
+    --bg:#ffffff; --paper:#fbfaf6; --ink:#1a1614; --ink-soft:#8a847f; --ink-line:#ece7df;
+    --accent:#D85A30; --accent-soft:#f9e4db; --accent-2:#7a9a6d;
+    --font-display:'Newsreader','DM Serif Display',Georgia,serif;
+    --font-ui:'Helvetica Neue',Helvetica,Arial,sans-serif;
+    --header-h:56px;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; height:100%; background:var(--bg); color:var(--ink); font:400 15px/1.45 var(--font-ui); }
+  body{ display:flex; flex-direction:column; min-height:100dvh; }
+
+  header{ display:flex; align-items:center; gap:12px; height:var(--header-h); padding:0 16px;
+    border-bottom:1px solid var(--ink-line); flex:none; background:var(--bg); }
+  .brand{ display:flex; align-items:center; gap:9px; margin-right:4px; }
+  .brand svg{ width:26px; height:26px; display:block; }
+  .wordmark{ margin:0; font:800 21px var(--font-display); letter-spacing:.2px; }
+  .wordmark .dot{ color:var(--accent); }
+  select,button{ font:700 13px var(--font-ui); color:var(--ink); background:var(--paper);
+    border:1.5px solid var(--ink-line); border-radius:999px; padding:8px 14px; cursor:pointer; letter-spacing:.2px; }
+  select:hover,button:hover{ border-color:var(--ink-soft); }
+  button.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  button:disabled{ opacity:.4; cursor:default; }
+  .iconbtn{ width:36px; height:36px; padding:0; display:inline-flex; align-items:center; justify-content:center; }
+  .iconbtn svg{ width:17px; height:17px; display:block; }
+  .spacer{ flex:1; }
+  .kbd{ font-size:11px; color:var(--ink-soft); font-weight:400; }
+  .kbd b{ background:var(--paper); border:1px solid var(--ink-line); border-radius:5px; padding:1px 6px; font-weight:700; }
+
+  /* ===== la paleta ===== */
+  #strip{ flex:1; display:flex; min-height:340px; }
+  .col{ flex:1; position:relative; display:flex; flex-direction:column; justify-content:flex-end; align-items:center;
+    padding:18px 6px calc(18px + env(safe-area-inset-bottom)); cursor:pointer; min-width:0; }
+  .col .hex{ font:800 clamp(13px,2.4vw,19px) var(--font-ui); letter-spacing:.5px; text-transform:uppercase;
+    background:transparent; border:none; color:inherit; padding:4px 6px; border-radius:7px; cursor:pointer; font-variant-numeric:tabular-nums; }
+  .col .hex:hover{ background:rgba(127,127,127,.18); }
+  .col .name{ font:italic 500 12px var(--font-display); opacity:.8; margin-top:2px; min-height:16px; text-align:center; }
+  .col .cr{ font-size:10.5px; font-weight:700; opacity:.75; margin-top:6px; border:1px solid currentColor; border-radius:999px; padding:1px 8px; }
+  .tools{ display:flex; flex-direction:column; gap:8px; opacity:0; transition:opacity .12s; margin-bottom:10px; }
+  .col:hover .tools, .col.locked .tools{ opacity:1; }
+  @media (hover:none){ .tools{ opacity:1; } }
+  .tools button{ width:38px; height:38px; padding:0; display:flex; align-items:center; justify-content:center;
+    background:rgba(20,20,20,.2); border:none; border-radius:10px; color:inherit; }
+  .tools button:hover{ background:rgba(20,20,20,.38); }
+  .tools svg{ width:19px; height:19px; }
+  .col.locked .lockbtn{ background:rgba(20,20,20,.48); }
+  .col.drag-over{ outline:3px dashed rgba(127,127,127,.6); outline-offset:-6px; }
+
+  /* ===== barra inferior ===== */
+  #bottombar{ display:flex; gap:8px; align-items:center; padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--ink-line); flex-wrap:wrap; flex:none; background:var(--bg); }
+
+  /* ===== modales ===== */
+  .ov{ position:fixed; inset:0; background:rgba(26,22,20,.45); display:none; align-items:center; justify-content:center; z-index:50; padding:18px; }
+  .ov.open{ display:flex; }
+  .modal{ background:var(--paper); border:1.5px solid var(--ink-line); border-radius:16px; width:min(640px,96vw);
+    max-height:86dvh; overflow:auto; padding:22px 24px; box-shadow:0 16px 50px rgba(0,0,0,.16); }
+  .modal h2{ margin:0 0 12px; font:800 22px var(--font-display); }
+  .modal .x{ float:right; background:transparent; border:none; font-size:20px; color:var(--ink-soft); padding:2px 8px; }
+  textarea{ width:100%; min-height:180px; background:var(--bg); color:var(--ink); border:1.5px solid var(--ink-line);
+    border-radius:10px; padding:12px; font:12.5px/1.5 ui-monospace,Menlo,Consolas,monospace; white-space:pre; }
+  .tabs{ display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+  .tabs button.on{ background:var(--accent); color:#fff; border-color:var(--accent); }
+
+  /* tonos */
+  #shades{ display:flex; flex-direction:column; border-radius:12px; overflow:hidden; border:1px solid var(--ink-line); }
+  #shades div{ padding:9px 14px; font:700 12.5px ui-monospace,Menlo,monospace; display:flex; justify-content:space-between; cursor:pointer; }
+
+  /* matriz de contraste */
+  table.cmx{ border-collapse:collapse; width:100%; font-size:12px; }
+  .cmx td,.cmx th{ border:1px solid var(--ink-line); padding:6px; text-align:center; }
+  .cmx .sw{ width:18px; height:18px; border-radius:5px; display:inline-block; vertical-align:middle; border:1px solid var(--ink-line); }
+  .cmx .aa{ font-weight:800; }
+
+  /* guardadas */
+  .saved-row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--ink-line); }
+  .saved-row .mini{ display:flex; flex:1; height:34px; border-radius:8px; overflow:hidden; cursor:pointer; border:1px solid var(--ink-line); }
+  .saved-row .mini i{ flex:1; }
+  .saved-row small{ color:var(--ink-soft); min-width:70px; }
+
+  /* vista previa */
+  #pv{ border-radius:14px; overflow:hidden; border:1.5px solid var(--ink-line); }
+  .pv-inner{ padding:22px; }
+  .pv-card{ border-radius:12px; padding:16px 18px; max-width:420px; margin:0 auto; }
+  .pv-card h3{ margin:0 0 6px; font:800 20px var(--font-display); }
+  .pv-card p{ margin:0 0 14px; font-size:13.5px; line-height:1.5; opacity:.9; }
+  .pv-btn{ border:none; border-radius:999px; padding:9px 22px; font:700 13px var(--font-ui); margin-right:8px; }
+  .pv-chip{ display:inline-block; border-radius:999px; padding:3px 12px; font-size:11.5px; font-weight:700; margin-bottom:10px; }
+  .pv-bars{ display:flex; gap:8px; align-items:flex-end; height:64px; margin-top:16px; }
+  .pv-bars i{ flex:1; border-radius:6px 6px 0 0; }
+
+  /* selector de color */
+  /* pk-body reserves the PICKER tab's height (square 16:9 + hue slider), so switching to
+     HEX/HSB/etc. never shrinks the dialog — the modal keeps one constant size. */
+  #pk-body{ min-height:calc((min(430px, 96vw) - 48px) * 9 / 16 + 28px); }
+  #pk-sq{ position:relative; width:100%; aspect-ratio:16/9; border-radius:10px; cursor:crosshair; touch-action:none; border:1px solid var(--ink-line); }
+  .pk-dot{ position:absolute; width:18px; height:18px; border-radius:50%; border:3.5px solid #fff; box-shadow:0 0 0 1.5px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.2); transform:translate(-50%,-50%); pointer-events:none; }
+  #pk-hue{ position:relative; height:14px; border-radius:999px; margin-top:14px; cursor:pointer; touch-action:none;
+    background:linear-gradient(to right,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00); }
+  #pk-hue .pk-dot{ top:50%; width:20px; height:20px; }
+  .pk-fields{ display:flex; gap:8px; margin-top:4px; flex-wrap:wrap; }
+  .pk-fields label{ flex:1; min-width:58px; font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.06em; font-weight:700; }
+  .pk-fields input{ width:100%; margin-top:3px; font:700 14px ui-monospace,Menlo,monospace; padding:7px 8px; border:1.5px solid var(--ink-line); border-radius:8px; background:var(--bg); color:var(--ink); }
+  #pk-preview{ width:44px; height:44px; border-radius:10px; border:1px solid var(--ink-line); flex:none; }
+  #toast{ position:fixed; left:50%; bottom:84px; transform:translateX(-50%); background:var(--accent); color:#fff;
+    font:800 13px var(--font-ui); letter-spacing:.4px; padding:8px 16px; border-radius:999px; opacity:0;
+    transition:opacity .18s; pointer-events:none; z-index:99; box-shadow:0 6px 18px rgba(0,0,0,.18); }
+  #toast.show{ opacity:1; }
+  @media (max-width:640px){ .kbd{ display:none; } header{ gap:8px; } .wordmark{ font-size:19px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="brand" aria-hidden="true">
+    <!-- logo: 2×2 fichas redondeadas (como Palabreo) en colores de paleta -->
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <rect x="3" y="3" width="12" height="12" rx="3" fill="#D85A30"/>
+      <rect x="17" y="3" width="12" height="12" rx="3" fill="#F9C80E"/>
+      <rect x="3" y="17" width="12" height="12" rx="3" fill="#4ECDC4"/>
+      <rect x="17" y="17" width="12" height="12" rx="3" fill="#662E9B"/>
+    </svg>
+    <h1 class="wordmark">Paletas<span class="dot">.</span></h1>
+  </span>
+  <select id="mode" title="Modo de generación">
+    <option value="smart">Aleatorio listo</option>
+    <option value="analogo">Análogo</option>
+    <option value="complementario">Complementario</option>
+    <option value="triadico">Triádico</option>
+    <option value="mono">Monocromo</option>
+    <option value="pastel">Pastel</option>
+    <option value="vibrante">Vibrante</option>
+    <option value="oscuro">Profundo</option>
+  </select>
+  <button class="primary" id="gen">Generar</button>
+  <button class="iconbtn" id="undo" title="Deshacer (Z)" aria-label="Deshacer">
+    <!-- icono compartido: _shared/icons/restart.svg (espejado = deshacer) -->
+    <svg viewBox="0 0 24 24" fill="currentColor" style="transform:scaleX(-1)"><path d="M12 5V2L6 7l6 5V8.5c3 0 5.5 2.5 5.5 5.5S15 19.5 12 19.5 6.5 17 6.5 14H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z"/></svg>
+  </button>
+  <span class="kbd"><b>Espacio</b> genera · <b>1-8</b> candado · <b>S</b> guarda · <b>E</b> exporta · <b>Z</b> deshace</span>
+  <span class="spacer"></span>
+  <button id="addcol" title="Añadir color">+ color</button>
+  <button id="imgbtn" title="Extraer de una imagen">De imagen</button>
+  <input type="file" id="imgfile" accept="image/*" hidden>
+</header>
+
+<div id="strip"></div>
+
+<div id="bottombar">
+  <button id="save">Guardar (S)</button>
+  <button id="mine">Mis paletas</button>
+  <button id="contrast">Contraste</button>
+  <button id="preview">Vista previa</button>
+  <button id="export">Exportar (E)</button>
+  <span class="spacer"></span>
+  <button id="share">Copiar enlace</button>
+</div>
+
+<div class="ov" id="ov-shades"><div class="modal"><button class="x" data-x>✕</button><h2>Tonos <span id="sh-hex" style="opacity:.6;font-size:13px;font-family:var(--font-ui)"></span></h2><div id="shades"></div></div></div>
+
+<div class="ov" id="ov-export"><div class="modal"><button class="x" data-x>✕</button><h2>Exportar</h2>
+  <div class="tabs" id="ex-tabs">
+    <button data-f="css" class="on">CSS vars</button><button data-f="tailwind">Tailwind</button>
+    <button data-f="json">JSON</button><button data-f="scss">SCSS</button>
+  </div>
+  <textarea id="ex-out" readonly></textarea>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="primary" id="ex-copy">Copiar</button>
+    <button id="ex-png">Descargar PNG</button>
+  </div>
+</div></div>
+
+<div class="ov" id="ov-contrast"><div class="modal"><button class="x" data-x>✕</button><h2>Contraste (WCAG)</h2>
+  <p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 12px">Cada celda: ratio texto-sobre-fondo. <b>≥4.5</b> pasa AA (texto normal), <b>≥3</b> AA texto grande, <b>≥7</b> AAA.</p>
+  <div id="cmx-wrap" style="overflow:auto"></div>
+</div></div>
+
+<div class="ov" id="ov-mine"><div class="modal"><button class="x" data-x>✕</button><h2>Mis paletas <span id="mine-n" style="opacity:.6;font-size:13px;font-family:var(--font-ui)"></span></h2><div id="mine-list"></div></div></div>
+
+<div class="ov" id="ov-preview"><div class="modal"><button class="x" data-x>✕</button><h2>Vista previa</h2>
+  <div class="tabs"><button id="pv-flip">Invertir claro/oscuro</button></div>
+  <div id="pv"></div>
+</div></div>
+
+<div class="ov" id="ov-picker"><div class="modal" style="width:min(430px,96vw)">
+  <button class="x" data-x>✕</button><h2>Color</h2>
+  <div class="tabs" id="pk-tabs">
+    <button data-t="picker" class="on">Picker</button><button data-t="hex">HEX</button><button data-t="hsb">HSB</button><button data-t="hsl">HSL</button><button data-t="rgb">RGB</button><button data-t="cmyk">CMYK</button>
+  </div>
+  <div id="pk-body"></div>
+  <div style="display:flex;gap:12px;align-items:center;margin-top:16px">
+    <div id="pk-preview"></div>
+    <span id="pk-hexlab" style="font:700 14px ui-monospace,monospace"></span>
+    <span class="spacer"></span>
+    <button class="primary" id="pk-ok">Listo</button>
+  </div>
+</div></div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+/* ================= motor OKLCH (OKLab de Björn Ottosson) ================= */
+function srgb2lin(c){ return c<=0.04045 ? c/12.92 : Math.pow((c+0.055)/1.055,2.4); }
+function lin2srgb(c){ return c<=0.0031308 ? 12.92*c : 1.055*Math.pow(c,1/2.4)-0.055; }
+function rgb2oklab(r,g,b){ r=srgb2lin(r); g=srgb2lin(g); b=srgb2lin(b);
+  const l=Math.cbrt(0.4122214708*r+0.5363325363*g+0.0514459929*b),
+        m=Math.cbrt(0.2119034982*r+0.6806995451*g+0.1073969566*b),
+        s=Math.cbrt(0.0883024619*r+0.2817188376*g+0.6299787005*b);
+  return [0.2104542553*l+0.7936177850*m-0.0040720468*s,
+          1.9779984951*l-2.4285922050*m+0.4505937099*s,
+          0.0259040371*l+0.7827717662*m-0.8086757660*s]; }
+function oklab2rgb(L,a,b2){
+  const l=(L+0.3963377774*a+0.2158037573*b2)**3,
+        m=(L-0.1055613458*a-0.0638541728*b2)**3,
+        s=(L-0.0894841775*a-1.2914855480*b2)**3;
+  return [lin2srgb(+4.0767416621*l-3.3077115913*m+0.2309699292*s),
+          lin2srgb(-1.2684380046*l+2.6097574011*m-0.3413193965*s),
+          lin2srgb(-0.0041960863*l-0.7034186147*m+1.7076147010*s)]; }
+function oklch2rgb(L,C,H){ const h=H*Math.PI/180; return oklab2rgb(L, C*Math.cos(h), C*Math.sin(h)); }
+function rgb2oklch(r,g,b){ const [L,a,b2]=rgb2oklab(r,g,b); return [L, Math.hypot(a,b2), ((Math.atan2(b2,a)*180/Math.PI)+360)%360]; }
+function inGamut(rgb){ return rgb.every(v=>v>=-0.0005&&v<=1.0005); }
+// recorta el croma al gamut sRGB (búsqueda binaria) — L y H se mantienen honestos
+function oklchHex(L,C,H){ let rgb=oklch2rgb(L,C,H);
+  if(!inGamut(rgb)){ let lo=0,hi=C; for(let i=0;i<18;i++){ const mid=(lo+hi)/2; if(inGamut(oklch2rgb(L,mid,H))) lo=mid; else hi=mid; } rgb=oklch2rgb(L,lo,H); }
+  return '#'+rgb.map(v=>Math.round(Math.max(0,Math.min(1,v))*255).toString(16).padStart(2,'0')).join(''); }
+function hex2rgb(h){ h=h.replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
+  return [parseInt(h.slice(0,2),16)/255, parseInt(h.slice(2,4),16)/255, parseInt(h.slice(4,6),16)/255]; }
+function hex2oklch(h){ return rgb2oklch(...hex2rgb(h)); }
+/* contraste WCAG */
+function relLum(hex){ const [r,g,b]=hex2rgb(hex).map(srgb2lin); return 0.2126*r+0.7152*g+0.0722*b; }
+function ratio(h1,h2){ const a=relLum(h1)+0.05, b=relLum(h2)+0.05; return a>b?a/b:b/a; }
+function bestText(hex){ return ratio(hex,'#000000')>=ratio(hex,'#ffffff') ? '#000000' : '#ffffff'; }
+/* nombre aproximado por tono */
+function colorName(hex){ const [L,C,H]=hex2oklch(hex);
+  if(C<0.02) return L>0.9?'blanco':L<0.2?'negro':'gris';
+  const names=[['rojo',20],['naranja',55],['ámbar',75],['amarillo',95],['lima',120],['verde',150],['esmeralda',165],['turquesa',185],['cian',210],['azul',255],['índigo',280],['violeta',300],['magenta',330],['rosa',350],['rojo',361]];
+  for(const [n,to] of names) if(H<=to) return n+(L>0.82?' claro':L<0.42?' oscuro':'');
+  return ''; }
+
+/* ================= estado ================= */
+const MAXC=8, MINC=2;
+let colors=[], mode='smart', history=[], hist_i=-1;
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+function toast(t){ const el=$('toast'); el.textContent=t; el.classList.add('show'); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),1300); }
+
+/* ================= generación ================= */
+// La escalera de L da ESTRUCTURA (un oscuro, medios, un claro) en vez de cinco medios al azar.
+function ladder(n){ const base=[0.28,0.45,0.62,0.78,0.9]; const out=[];
+  for(let i=0;i<n;i++) out.push(base[Math.round(i*(base.length-1)/Math.max(1,n-1))]+rnd(-0.04,0.04));
+  return out.sort(()=>Math.random()-0.5); }
+function baseHue(){ const lockedIdx=colors.findIndex(c=>c.locked);
+  return lockedIdx>=0 ? hex2oklch(colors[lockedIdx].hex)[2] : rnd(0,360); }
+function genHexes(n){
+  const Ls=ladder(n), H0=baseHue(), out=[];
+  const GOLD=137.508;
+  for(let i=0;i<n;i++){
+    let L=Ls[i], C, H;
+    switch(mode){
+      case 'analogo':        H=H0+rnd(-8,8)+(i-(n-1)/2)*rnd(14,22); C=rnd(0.07,0.16); break;
+      case 'complementario': H=(i%2? H0+180 : H0)+rnd(-14,14);      C=rnd(0.08,0.18); break;
+      case 'triadico':       H=H0+[0,120,240][i%3]+rnd(-12,12);     C=rnd(0.08,0.17); break;
+      case 'mono':           H=H0+rnd(-5,5); C=rnd(0.05,0.14); L=0.2+ (i/(n-1))*0.72 + rnd(-0.02,0.02); break;
+      case 'pastel':         H=(H0+i*GOLD)%360; C=rnd(0.03,0.065); L=rnd(0.84,0.93); break;
+      case 'vibrante':       H=(H0+i*GOLD)%360; C=rnd(0.16,0.26);  L=rnd(0.55,0.72); break;
+      case 'oscuro':         H=(H0+i*GOLD)%360; C=rnd(0.05,0.13);  L=rnd(0.22,0.45); break;
+      default:               H=(H0+i*GOLD+rnd(-16,16))%360; C=rnd(0.05,0.2); break;   // aleatorio listo: tonos en ángulo áureo + escalera de L
+    }
+    out.push(oklchHex(Math.max(0.1,Math.min(0.97,L)), C, ((H%360)+360)%360));
+  }
+  return out;
+}
+function generate(){
+  const fresh=genHexes(colors.length);
+  colors=colors.map((c,i)=>c.locked?c:{hex:fresh[i],locked:false});
+  pushHistory(); render();
+}
+function pushHistory(){ history=history.slice(0,hist_i+1); history.push(JSON.stringify(colors)); if(history.length>80) history.shift(); hist_i=history.length-1; }
+function undo(){ if(hist_i>0){ hist_i--; colors=JSON.parse(history[hist_i]); render(false); } }
+
+/* ================= render ================= */
+const ICONS={
+  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+  unlock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.8-1.3"/></svg>',
+  shades:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  copy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>'
+};
+function render(save){
+  if(save!==false) location.hash=colors.map(c=>c.hex.slice(1)).join('-');
+  const strip=$('strip'); strip.innerHTML='';
+  colors.forEach((c,i)=>{
+    const tx=bestText(c.hex), r=ratio(c.hex,tx);
+    const col=document.createElement('div');
+    col.className='col'+(c.locked?' locked':''); col.style.background=c.hex; col.style.color=tx;
+    col.draggable=true; col.dataset.i=i;
+    col.innerHTML=
+      '<div class="tools">'+
+        '<button class="lockbtn" title="Candado ('+(i+1)+')">'+(c.locked?ICONS.lock:ICONS.unlock)+'</button>'+
+        '<button class="shbtn" title="Tonos">'+ICONS.shades+'</button>'+
+        '<button class="cpbtn" title="Copiar">'+ICONS.copy+'</button>'+
+        (colors.length>MINC?'<button class="rmbtn" title="Quitar">'+ICONS.x+'</button>':'')+
+      '</div>'+
+      '<button class="hex">'+c.hex.slice(1)+'</button>'+
+      '<div class="name">'+colorName(c.hex)+'</div>'+
+      '<div class="cr" title="Contraste con su texto">'+r.toFixed(1)+(r>=4.5?' AA':r>=3?' AA+':' ✗')+'</div>';
+    col.querySelector('.lockbtn').onclick=e=>{ e.stopPropagation(); c.locked=!c.locked; render(false); };
+    col.querySelector('.shbtn').onclick=e=>{ e.stopPropagation(); openShades(i); };
+    col.querySelector('.cpbtn').onclick=e=>{ e.stopPropagation(); copy(c.hex); };
+    const rm=col.querySelector('.rmbtn'); if(rm) rm.onclick=e=>{ e.stopPropagation(); colors.splice(i,1); pushHistory(); render(); };
+    col.querySelector('.hex').onclick=e=>{ e.stopPropagation(); openPicker(i); };
+    col.ondragstart=e=>e.dataTransfer.setData('text/plain',i);
+    col.ondragover=e=>{ e.preventDefault(); col.classList.add('drag-over'); };
+    col.ondragleave=()=>col.classList.remove('drag-over');
+    col.ondrop=e=>{ e.preventDefault(); const from=+e.dataTransfer.getData('text/plain');
+      const [m]=colors.splice(from,1); colors.splice(i,0,m); pushHistory(); render(); };
+    strip.appendChild(col);
+  });
+  $('addcol').disabled=colors.length>=MAXC;
+}
+function copy(t){ (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast(t+' copiado')).catch(()=>{ const ta=document.createElement('textarea'); ta.value=t; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast(t+' copiado'); }); }
+
+/* ================= tonos ================= */
+function openShades(i){ const c=colors[i]; const [,C,H]=hex2oklch(c.hex);
+  $('sh-hex').textContent=c.hex;
+  const box=$('shades'); box.innerHTML='';
+  for(let k=0;k<13;k++){ const L=0.97-k*(0.82/12); const hx=oklchHex(L,C,H); const tx=bestText(hx);
+    const d=document.createElement('div'); d.style.background=hx; d.style.color=tx;
+    d.innerHTML='<span>'+hx+'</span><span>usar ↵</span>';
+    d.onclick=()=>{ colors[i]={hex:hx,locked:true}; pushHistory(); render(); closeOvs(); toast(hx+' fijado'); };
+    box.appendChild(d); }
+  $('ov-shades').classList.add('open'); }
+
+/* ================= exportar ================= */
+let exFmt='css';
+function exportText(){
+  const hx=colors.map(c=>c.hex), names=['uno','dos','tres','cuatro','cinco','seis','siete','ocho'];
+  if(exFmt==='css')  return ':root{\n'+hx.map((h,i)=>'  --color-'+(i+1)+': '+h+';').join('\n')+'\n}';
+  if(exFmt==='scss') return hx.map((h,i)=>'$color-'+(i+1)+': '+h+';').join('\n');
+  if(exFmt==='json') return JSON.stringify(hx,null,2);
+  if(exFmt==='tailwind') return "colors: {\n"+hx.map((h,i)=>"  '"+names[i]+"': '"+h+"',").join('\n')+'\n}';
+  return hx.join('\n'); }
+function renderExport(){ $('ex-out').value=exportText(); }
+function exportPNG(){ const W=colors.length*240, H=520;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const ctx=cv.getContext('2d');
+  colors.forEach((c,i)=>{ ctx.fillStyle=c.hex; ctx.fillRect(i*240,0,240,H);
+    ctx.fillStyle=bestText(c.hex); ctx.font='700 24px monospace'; ctx.textAlign='center';
+    ctx.fillText(c.hex.toUpperCase(), i*240+120, H-36); });
+  const a=document.createElement('a'); a.download='paleta-'+colors.map(c=>c.hex.slice(1)).join('-')+'.png';
+  a.href=cv.toDataURL('image/png'); a.click(); }
+
+/* ================= matriz de contraste ================= */
+function renderMatrix(){ const hx=colors.map(c=>c.hex);
+  let t='<table class="cmx"><tr><th>texto \\ fondo</th>'+hx.map(h=>'<th><span class="sw" style="background:'+h+'"></span></th>').join('')+'</tr>';
+  for(const a of hx){ t+='<tr><th><span class="sw" style="background:'+a+'"></span></th>';
+    for(const b of hx){ if(a===b){ t+='<td style="opacity:.25">—</td>'; continue; }
+      const r=ratio(a,b); const cls=r>=4.5?'aa':''; const mark=r>=7?' AAA':r>=4.5?' AA':r>=3?' AA-g':'';
+      t+='<td class="'+cls+'" style="background:'+b+';color:'+a+'">'+r.toFixed(1)+mark+'</td>'; }
+    t+='</tr>'; }
+  $('cmx-wrap').innerHTML=t+'</table>'; }
+
+/* ================= paletas guardadas ================= */
+const LSKEY='paletas-guardadas';
+function getSaved(){ try{ return JSON.parse(localStorage.getItem(LSKEY))||[]; }catch(e){ return []; } }
+function savePalette(){ const list=getSaved();
+  list.unshift({ hx:colors.map(c=>c.hex), t:Date.now() });
+  localStorage.setItem(LSKEY, JSON.stringify(list.slice(0,200))); toast('Paleta guardada'); }
+function renderMine(){ const list=getSaved(); $('mine-n').textContent=list.length?('· '+list.length):'';
+  const box=$('mine-list');
+  box.innerHTML=list.length?'':'<p style="color:var(--ink-soft)">Nada guardado todavía. Pulsa <b>S</b> cuando te guste una paleta.</p>';
+  list.forEach((p,idx)=>{ const row=document.createElement('div'); row.className='saved-row';
+    row.innerHTML='<div class="mini">'+p.hx.map(h=>'<i style="background:'+h+'"></i>').join('')+'</div>'+
+      '<small>'+new Date(p.t).toLocaleDateString()+'</small><button title="Borrar">✕</button>';
+    row.querySelector('.mini').onclick=()=>{ colors=p.hx.map(h=>({hex:h,locked:false})); pushHistory(); render(); closeOvs(); };
+    row.querySelector('button').onclick=()=>{ const l=getSaved(); l.splice(idx,1); localStorage.setItem(LSKEY,JSON.stringify(l)); renderMine(); };
+    box.appendChild(row); }); }
+
+/* ================= vista previa ================= */
+let pvDark=false;
+function pvRoles(){ const sorted=colors.map(c=>({hex:c.hex,o:hex2oklch(c.hex)})).sort((a,b)=>a.o[0]-b.o[0]);
+  const darkest=sorted[0].hex, lightest=sorted[sorted.length-1].hex;
+  const accent=colors.map(c=>({hex:c.hex,o:hex2oklch(c.hex)})).sort((a,b)=>b.o[1]-a.o[1])[0].hex;
+  const bg=pvDark?darkest:lightest, ink=pvDark?lightest:darkest;
+  return {bg,ink,accent}; }
+function renderPreview(){ const {bg,ink,accent}=pvRoles(); const onAcc=bestText(accent);
+  const others=colors.map(c=>c.hex);
+  $('pv').innerHTML='<div class="pv-inner" style="background:'+bg+'">'+
+    '<div class="pv-card" style="background:'+bg+';color:'+ink+';border:1px solid '+ink+'22">'+
+      '<span class="pv-chip" style="background:'+accent+';color:'+onAcc+'">'+colorName(accent)+'</span>'+
+      '<h3>Así se ve tu paleta</h3>'+
+      '<p>Texto principal sobre el color más '+(pvDark?'oscuro':'claro')+' de la paleta (contraste '+ratio(bg,ink).toFixed(1)+').</p>'+
+      '<button class="pv-btn" style="background:'+accent+';color:'+onAcc+'">Acción</button>'+
+      '<button class="pv-btn" style="background:transparent;color:'+ink+';border:1.5px solid '+ink+'55">Secundaria</button>'+
+      '<div class="pv-bars">'+others.map((h,i)=>'<i style="background:'+h+';height:'+(30+((i*37)%70))+'%"></i>').join('')+'</div>'+
+    '</div></div>'; }
+
+/* ================= paleta desde imagen (k-means) ================= */
+function fromImage(file){ const img=new Image();
+  img.onload=()=>{ const cv=document.createElement('canvas'); const S=72; cv.width=S; cv.height=S;
+    const ctx=cv.getContext('2d'); ctx.drawImage(img,0,0,S,S);
+    const d=ctx.getImageData(0,0,S,S).data, pts=[];
+    for(let i=0;i<d.length;i+=16) pts.push([d[i]/255,d[i+1]/255,d[i+2]/255]);
+    const k=colors.length; let cent=pts.slice(0,k).map((_,i)=>pts[(i*97)%pts.length]);
+    for(let it=0;it<12;it++){ const sums=cent.map(()=>[0,0,0,0]);
+      for(const p of pts){ let bi=0,bd=1e9; cent.forEach((c,ci)=>{ const dd=(p[0]-c[0])**2+(p[1]-c[1])**2+(p[2]-c[2])**2; if(dd<bd){bd=dd;bi=ci;} });
+        sums[bi][0]+=p[0]; sums[bi][1]+=p[1]; sums[bi][2]+=p[2]; sums[bi][3]++; }
+      cent=sums.map((s,ci)=>s[3]?[s[0]/s[3],s[1]/s[3],s[2]/s[3]]:cent[ci]); }
+    cent.sort((a,b)=>rgb2oklch(...a)[0]-rgb2oklch(...b)[0]);
+    colors=cent.map(c=>({hex:'#'+c.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join(''),locked:false}));
+    pushHistory(); render(); toast('Paleta extraída'); URL.revokeObjectURL(img.src); };
+  img.src=URL.createObjectURL(file); }
+
+/* ================= selector de color (picker) ================= */
+function hsv2rgb(h,s,v){ h=(((h%360)+360)%360)/60; const c=v*s, x=c*(1-Math.abs(h%2-1)), m=v-c;
+  const t=[[c,x,0],[x,c,0],[0,c,x],[0,x,c],[x,0,c],[c,0,x]][Math.floor(h)%6];
+  return [t[0]+m,t[1]+m,t[2]+m]; }
+function rgb2hsv(r,g,b){ const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;
+  let h=0; if(d){ if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
+  return [h, mx?d/mx:0, mx]; }
+function rgb2hslv(r,g,b){ const mx=Math.max(r,g,b),mn=Math.min(r,g,b),l=(mx+mn)/2,d=mx-mn;
+  let h=0,sat=0; if(d){ sat=d/(1-Math.abs(2*l-1)); if(mx===r)h=((g-b)/d)%6; else if(mx===g)h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; if(h<0)h+=360; }
+  return [h,sat,l]; }
+function hsl2rgbv(h,sat,l){ const c=(1-Math.abs(2*l-1))*sat; h=(((h%360)+360)%360)/60;
+  const x=c*(1-Math.abs(h%2-1)), m=l-c/2;
+  const t=[[c,x,0],[x,c,0],[0,c,x],[0,x,c],[x,0,c],[c,0,x]][Math.floor(h)%6];
+  return [t[0]+m,t[1]+m,t[2]+m]; }
+function rgb2cmyk(r,g,b){ const k=1-Math.max(r,g,b); if(k>=1) return [0,0,0,1];
+  return [(1-r-k)/(1-k),(1-g-k)/(1-k),(1-b-k)/(1-k),k]; }
+function cmyk2rgb(c,m,y,k){ return [(1-c)*(1-k),(1-m)*(1-k),(1-y)*(1-k)]; }
+function rgb2hexs(rgb){ return '#'+rgb.map(v=>Math.round(Math.max(0,Math.min(1,v))*255).toString(16).padStart(2,'0')).join(''); }
+
+let pkI=-1, pkH=0, pkS=1, pkV=1, pkTab='picker', pkDirty=false;
+function pkHex(){ return rgb2hexs(hsv2rgb(pkH,pkS,pkV)); }
+function openPicker(i){ pkI=i; pkTab='picker'; pkDirty=false;
+  const [h,sv,v]=rgb2hsv(...hex2rgb(colors[i].hex)); pkH=h; pkS=sv; pkV=v;
+  document.querySelectorAll('#pk-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t==='picker'));
+  renderPk(); $('ov-picker').classList.add('open'); }
+function pkApplyLive(){ pkDirty=true; const hx=pkHex(); colors[pkI]={hex:hx,locked:colors[pkI].locked};
+  const col=document.querySelector('.col[data-i="'+pkI+'"]');
+  if(col){ const tx=bestText(hx); col.style.background=hx; col.style.color=tx;
+    col.querySelector('.hex').textContent=hx.slice(1); col.querySelector('.name').textContent=colorName(hx);
+    const r=ratio(hx,tx); col.querySelector('.cr').textContent=r.toFixed(1)+(r>=4.5?' AA':r>=3?' AA+':' ✗'); }
+  $('pk-preview').style.background=hx; $('pk-hexlab').textContent=hx; }
+function pkCommit(){ if(pkDirty){ pushHistory(); render(); pkDirty=false; } }
+function fields(defs){ return '<div class="pk-fields">'+defs.map(d=>'<label>'+d[0]+'<input id="pkf-'+d[0]+'" value="'+d[1]+'"></label>').join('')+'</div>'; }
+function renderPk(){ const body=$('pk-body'); const rgb=hsv2rgb(pkH,pkS,pkV);
+  if(pkTab==='picker'){
+    body.innerHTML='<div id="pk-sq"><i class="pk-dot"></i></div><div id="pk-hue"><i class="pk-dot"></i></div>';
+    const sq=$('pk-sq'), hue=$('pk-hue');
+    const paint=()=>{ sq.style.background='linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,hsl('+pkH+' 100% 50%))';
+      const d1=sq.querySelector('.pk-dot'); d1.style.left=(pkS*100)+'%'; d1.style.top=((1-pkV)*100)+'%';
+      d1.style.background=pkHex();
+      const d2=hue.querySelector('.pk-dot'); d2.style.left=(pkH/360*100)+'%'; d2.style.background='hsl('+pkH+' 100% 50%)'; };
+    const drag=(el,fn)=>{ const mv=e=>{ const r=el.getBoundingClientRect();
+        fn(Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)), Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)));
+        paint(); pkApplyLive(); };
+      el.addEventListener('pointerdown',e=>{ el.setPointerCapture(e.pointerId); mv(e);
+        const up=()=>{ el.removeEventListener('pointermove',mv); el.removeEventListener('pointerup',up); };
+        el.addEventListener('pointermove',mv); el.addEventListener('pointerup',up); }); };
+    drag(sq,(x,y)=>{ pkS=x; pkV=1-y; });
+    drag(hue,(x)=>{ pkH=x*360; });
+    paint();
+  } else if(pkTab==='hex'){
+    body.innerHTML=fields([['hex',pkHex()]]);
+    $('pkf-hex').oninput=e=>{ const v=e.target.value.trim(); if(/^#?[0-9a-fA-F]{6}$/.test(v)){
+      const [h,sv,vv]=rgb2hsv(...hex2rgb('#'+v.replace('#',''))); pkH=h; pkS=sv; pkV=vv; pkApplyLive(); } };
+  } else if(pkTab==='hsb'){
+    body.innerHTML=fields([['h',Math.round(pkH)],['s',Math.round(pkS*100)],['b',Math.round(pkV*100)]]);
+    const upd=()=>{ pkH=+$('pkf-h').value||0; pkS=Math.max(0,Math.min(100,+$('pkf-s').value||0))/100; pkV=Math.max(0,Math.min(100,+$('pkf-b').value||0))/100; pkApplyLive(); };
+    ['h','s','b'].forEach(k=>$('pkf-'+k).oninput=upd);
+  } else if(pkTab==='hsl'){
+    const [h,sat,l]=rgb2hslv(...rgb);
+    body.innerHTML=fields([['h',Math.round(h)],['s',Math.round(sat*100)],['l',Math.round(l*100)]]);
+    const upd=()=>{ const r2=hsl2rgbv(+$('pkf-h').value||0, Math.max(0,Math.min(100,+$('pkf-s').value||0))/100, Math.max(0,Math.min(100,+$('pkf-l').value||0))/100);
+      const [hh,ss,vv]=rgb2hsv(...r2); pkH=hh; pkS=ss; pkV=vv; pkApplyLive(); };
+    ['h','s','l'].forEach(k=>$('pkf-'+k).oninput=upd);
+  } else if(pkTab==='rgb'){
+    body.innerHTML=fields([['r',Math.round(rgb[0]*255)],['g',Math.round(rgb[1]*255)],['b',Math.round(rgb[2]*255)]]);
+    const upd=()=>{ const v=['r','g','b'].map(k=>Math.max(0,Math.min(255,+$('pkf-'+k).value||0))/255);
+      const [hh,ss,vv]=rgb2hsv(...v); pkH=hh; pkS=ss; pkV=vv; pkApplyLive(); };
+    ['r','g','b'].forEach(k=>$('pkf-'+k).oninput=upd);
+  } else if(pkTab==='cmyk'){
+    const cm=rgb2cmyk(...rgb);
+    body.innerHTML=fields([['c',Math.round(cm[0]*100)],['m',Math.round(cm[1]*100)],['y',Math.round(cm[2]*100)],['k',Math.round(cm[3]*100)]]);
+    const upd=()=>{ const v=['c','m','y','k'].map(k=>Math.max(0,Math.min(100,+$('pkf-'+k).value||0))/100);
+      const [hh,ss,vv]=rgb2hsv(...cmyk2rgb(...v)); pkH=hh; pkS=ss; pkV=vv; pkApplyLive(); };
+    ['c','m','y','k'].forEach(k=>$('pkf-'+k).oninput=upd);
+  }
+  $('pk-preview').style.background=pkHex(); $('pk-hexlab').textContent=pkHex(); }
+
+/* ================= conexiones ================= */
+function closeOvs(){ if($('ov-picker').classList.contains('open')) pkCommit();
+  document.querySelectorAll('.ov').forEach(o=>o.classList.remove('open')); }
+document.querySelectorAll('[data-x]').forEach(b=>b.onclick=closeOvs);
+document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) closeOvs(); }));
+$('gen').onclick=generate;
+$('undo').onclick=undo;
+$('mode').onchange=e=>{ mode=e.target.value; };
+$('addcol').onclick=()=>{ if(colors.length<MAXC){ colors.push({hex:genHexes(colors.length+1)[colors.length],locked:false}); pushHistory(); render(); } };
+$('save').onclick=savePalette;
+$('mine').onclick=()=>{ renderMine(); $('ov-mine').classList.add('open'); };
+$('contrast').onclick=()=>{ renderMatrix(); $('ov-contrast').classList.add('open'); };
+$('preview').onclick=()=>{ renderPreview(); $('ov-preview').classList.add('open'); };
+$('pv-flip').onclick=()=>{ pvDark=!pvDark; renderPreview(); };
+$('export').onclick=()=>{ renderExport(); $('ov-export').classList.add('open'); };
+$('ex-tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{ exFmt=b.dataset.f;
+  $('ex-tabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); renderExport(); });
+$('pk-tabs').querySelectorAll('button').forEach(b=>b.onclick=()=>{ pkTab=b.dataset.t;
+  $('pk-tabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); renderPk(); });
+$('pk-ok').onclick=closeOvs;
+$('ex-copy').onclick=()=>copy($('ex-out').value);
+$('ex-png').onclick=exportPNG;
+$('share').onclick=()=>copy(location.href);
+$('imgbtn').onclick=()=>$('imgfile').click();
+$('imgfile').onchange=e=>{ if(e.target.files[0]) fromImage(e.target.files[0]); e.target.value=''; };
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT') return;
+  if(e.code==='Space'){ e.preventDefault(); generate(); }
+  else if(e.key>='1'&&e.key<='8'){ const i=+e.key-1; if(colors[i]){ colors[i].locked=!colors[i].locked; render(false); } }
+  else if(e.key==='s'||e.key==='S') savePalette();
+  else if(e.key==='e'||e.key==='E'){ renderExport(); $('ov-export').classList.add('open'); }
+  else if(e.key==='z'||e.key==='Z') undo();
+  else if(e.key==='Escape') closeOvs();
+});
+/* arranque: paleta desde el enlace, o una fresca */
+(function(){
+  const h=location.hash.replace('#','');
+  if(/^([0-9a-fA-F]{6})(-[0-9a-fA-F]{6})*$/.test(h)){
+    colors=h.split('-').map(x=>({hex:'#'+x.toLowerCase(),locked:false}));
+  } else {
+    colors=genHexes(5).map(hx=>({hex:hx,locked:false}));
+  }
+  pushHistory(); render(false); location.hash=colors.map(c=>c.hex.slice(1)).join('-');
+})();
+</script>
+</body>
+</html>
