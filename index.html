@@ -153,15 +153,18 @@
     text-shadow:0 1px 2px rgba(0,0,0,.18); }
   .explore-btn:hover{ background:#EDBB00; border-color:#EDBB00; }
 
-  #ex-chips{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  #ex-chips{ margin-bottom:12px; }
+  .ex-chiprow{ display:flex; gap:6px; flex-wrap:wrap; }
+  .ex-grouplab{ font:800 10.5px var(--font-ui); text-transform:uppercase; letter-spacing:.7px;
+    color:var(--ink-soft); margin:10px 0 5px; }
   #ex-chips button{ padding:6px 13px; font-size:12.5px; }
   #ex-chips button.on{ background:var(--accent); color:#fff; border-color:var(--accent); }
-  #ex-list{ height:56dvh; overflow:auto; padding-right:2px; }   /* FIXED height — the modal stays one size no matter the category */
+  #ex-list{ height:42dvh; overflow:auto; padding-right:2px; }   /* FIXED height — the modal stays one size no matter the category */
   .ex-row{ display:flex; align-items:center; gap:10px; padding:7px 0; }
   .ex-row .mini{ display:flex; flex:1; height:44px; border-radius:10px; overflow:hidden; cursor:pointer; border:1px solid var(--ink-line); transition:transform .08s; }
   .ex-row .mini:hover{ transform:scale(1.012); }
   .ex-row .mini i{ flex:1; }
-  .ex-row small{ color:var(--ink-soft); min-width:86px; text-align:right; font-size:11px; }
+  .ex-row small{ color:var(--ink-soft); min-width:120px; max-width:150px; text-align:right; font-size:11px; line-height:1.25; }
 
   /* guardadas */
   .saved-row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--ink-line); }
@@ -733,9 +736,84 @@ const EXPLORE=[
 {g:'marca',p:['#0081a7','#00afb9','#fdfcdc','#fed9b7','#f07167']},
 {g:'marca',p:['#390099','#9e0059','#ff0054','#ff5400','#ffbd00']},
 {g:'marca',p:['#006ba6','#0496ff','#ffbc42','#d81159','#8f2d56']},
-{g:'marca',p:['#0d3b66','#faf0ca','#f4d35e','#ee964b','#f95738']}
+{g:'marca',p:['#0d3b66','#faf0ca','#f4d35e','#ee964b','#f95738']},
+// ===== pintores =====
+{g:'van gogh',n:'noche estrellada',p:['#101c3d','#2a4d8f','#7ba4c9','#f5d547','#1b2a20']},
+{g:'van gogh',n:'girasoles',p:['#f6d045','#e0a90f','#a97813','#6b4e0b','#efe3c0']},
+{g:'van gogh',n:'terraza de café',p:['#1e3888','#4a69bd','#f9c860','#d98032','#28323c']},
+{g:'van gogh',n:'los lirios',p:['#3d5aa9','#7b8fc7','#5a7d4a','#c9d4a3','#e8e4d8']},
+{g:'van gogh',n:'la habitación',p:['#6e8fc9','#c8d6e8','#d9a441','#a5482e','#5f7a52']},
+{g:'van gogh',n:'trigal con cuervos',p:['#e0a90f','#c17817','#2b3a67','#1a1a2e','#5a7d4a']},
+{g:'monet',n:'nenúfares',p:['#4a7a6a','#8fb5a5','#c7a4cf','#e3b7c8','#eef2e6']},
+{g:'monet',n:'sol naciente',p:['#5c6f82','#8fa3b5','#e8734a','#c9502e','#3a4a5c']},
+{g:'monet',n:'jardín de giverny',p:['#3f6b3f','#7ba05b','#d67ba8','#e8c2d8','#f2ead9']},
+{g:'monet',n:'almiares',p:['#d98a5f','#e8b87f','#a86a8e','#6b5a8f','#f2e0c0']},
+{g:'picasso',n:'época azul',p:['#12233d','#1f3a5c','#3e5f8a','#7fa8c9','#c9d4e0']},
+{g:'picasso',n:'época rosa',p:['#c98a7a','#e8b8a5','#a55c4a','#d9cfc0','#8a6c5c']},
+{g:'picasso',n:'guernica',p:['#111111','#3a3a3a','#6e6e6e','#a8a8a8','#e0e0e0']},
+{g:'kahlo',n:'viva la vida',p:['#0e6b5c','#e84855','#f9c80e','#2e5c3f','#c9502e']},
+{g:'kahlo',n:'casa azul',p:['#1f6ba5','#2e8b57','#e84855','#f2d0a9','#8a4a2e']},
+{g:'hokusai',n:'la gran ola',p:['#0d2b52','#1f4e8c','#7fa8c9','#e8e0ce','#b8a988']},
+{g:'hokusai',n:'fuji rojo',p:['#a63c2e','#d98a5f','#2b4a6b','#87a8c9','#e8e4d8']},
+{g:'klimt',n:'el beso',p:['#c9a227','#e5c458','#8a6c1e','#5c4632','#a8b89a']},
+{g:'klimt',n:'retrato de adele',p:['#d4af37','#b8860b','#8b6914','#2e2418','#c0c0b0']},
+{g:'maestros clásicos',n:'vermeer · la perla',p:['#141210','#2e4a6b','#c9a227','#e5d3ae','#5c3a24']},
+{g:'maestros clásicos',n:'vermeer · lechera',p:['#f0c94a','#3e5f8a','#8a2f1e','#e8dcc0','#5a4632']},
+{g:'maestros clásicos',n:'rembrandt',p:['#1a120b','#3e2a18','#8a5c28','#c99b4a','#e0c890']},
+{g:'maestros clásicos',n:'caravaggio',p:['#0e0a08','#2e1f14','#8a2f1e','#c9913f','#e0cba5']},
+{g:'maestros clásicos',n:'velázquez',p:['#141210','#3e3a35','#7a736a','#b0a898','#ddd5c5']},
+{g:'maestros clásicos',n:'goya · negras',p:['#141210','#3a2e24','#6b5a45','#a89268','#c9b890']},
+{g:'maestros clásicos',n:'botticelli · venus',p:['#e8cba5','#c98a5f','#8aa8b8','#5c7a6b','#f2e4d0']},
+{g:'maestros clásicos',n:'turner',p:['#e8c25f','#d99b4a','#a8b8c9','#6b7a8a','#f2e8d5']},
+{g:'impresionistas',n:'cézanne · manzanas',p:['#c9502e','#e8a03f','#8aa05b','#5c7a8a','#e8dcc0']},
+{g:'impresionistas',n:'gauguin · tahití',p:['#c95c3e','#e89b5f','#8a2f5c','#2e6b5c','#f2c98a']},
+{g:'impresionistas',n:'seurat · la grande jatte',p:['#5c8a5b','#a8c48a','#3e5f8a','#e8d5a5','#8a5c4a']},
+{g:'impresionistas',n:'sorolla · orilla del mar',p:['#f4ecdc','#9fc0d9','#4a7ba5','#d9b98a','#7a5c3e']},
+{g:'impresionistas',n:'degas · bailarinas',p:['#e8d5c9','#c9a4b8','#8a94b8','#5c6488','#f2e8dc']},
+{g:'arte moderno',n:'matisse · recortes',p:['#1f4ea1','#e8483f','#f9c80e','#2e8b57','#f2ead9']},
+{g:'arte moderno',n:'matisse · habitación roja',p:['#a52a2a','#c9502e','#2e4a6b','#e8c25f','#5a7d4a']},
+{g:'arte moderno',n:'rothko · naranja',p:['#c9502e','#e8734a','#a52a1a','#7a1f14','#e8a05f']},
+{g:'arte moderno',n:'rothko · azul',p:['#1f3a5c','#2e5c6b','#3e7a6b','#12233d','#5c8a8a']},
+{g:'arte moderno',n:'mondrian',p:['#ffffff','#d40920','#1356a2','#f7d842','#141414']},
+{g:'arte moderno',n:'miró',p:['#e8483f','#1f4ea1','#f9c80e','#2e2e2e','#f2ead9']},
+{g:'arte moderno',n:'dalí',p:['#c9a86a','#8a6c4a','#5c8ab0','#e8d5b5','#3e3228']},
+{g:'arte moderno',n:'hopper · nighthawks',p:['#0e2e2e','#1f5c5c','#c9a227','#e8d5a5','#8a2f1e']},
+{g:'arte moderno',n:'munch · el grito',p:['#c9502e','#e8863f','#f2b95c','#2e4a6b','#1f2e3d']},
+{g:'arte moderno',n:"o'keeffe",p:['#e8b8c9','#c95c8a','#f2e0d5','#8a4a5c','#5c3a4a']},
+{g:'arte moderno',n:'chagall',p:['#1f3a8a','#4a5fc9','#8a2f5c','#5c9b6b','#e8c25f']},
+{g:'arte moderno',n:'kandinsky',p:['#e8863f','#1f4ea1','#c92e3e','#f2d95c','#2e5c4a']},
+{g:'pop',n:'warhol · marilyn',p:['#ff4fa0','#f9c80e','#3ec9c9','#f2703e','#8a4ab0']},
+{g:'pop',n:'lichtenstein',p:['#e8483f','#f9c80e','#1f4ea1','#ffffff','#141414']},
+{g:'pop',n:'haring',p:['#e8483f','#f9c80e','#1f6ba5','#2e8b57','#141414']},
+{g:'pop',n:'kusama · lunares',p:['#e8483f','#f2ead9','#f9c80e','#141414','#e8e0ce']},
+{g:'pop',n:'basquiat',p:['#141414','#e8b31f','#2e6bc9','#c92e3e','#e8e0d0']},
+// ===== cine y estudios =====
+{g:'ghibli',n:'totoro',p:['#4a6b4a','#7a9b6b','#a8c48a','#5c8ab0','#e8e4d0']},
+{g:'ghibli',n:'el viaje de chihiro',p:['#a52a2e','#e8863f','#2e5c6b','#5c9bb0','#f2e0c0']},
+{g:'ghibli',n:'el castillo ambulante',p:['#6b9bc9','#a5c9e0','#7a9b5b','#e8c25f','#f2ead9']},
+{g:'ghibli',n:'kiki',p:['#1f4e8a','#5c8ac9','#c94a3e','#f2dcb0','#2e5c4a']},
+{g:'ghibli',n:'mononoke',p:['#1f3d2e','#3e6b4a','#7aa06b','#c9d4b0','#8a2f1e']},
+{g:'ghibli',n:'ponyo',p:['#e86b8a','#f2a5b8','#2e8ab0','#7ac9dc','#f9d95c']},
+{g:'ghibli',n:'laputa',p:['#4a8a7a','#8ac4a8','#c9e0c0','#5c7ab0','#e8d5a5']},
+{g:'wes anderson',n:'gran hotel budapest',p:['#d98aa5','#e8c4d0','#7a4a8a','#c9502e','#f2e0c0']},
+{g:'wes anderson',n:'moonrise kingdom',p:['#c9b45c','#e8dca5','#8a6c3e','#5c7a6b','#c95c3e']},
+{g:'wes anderson',n:'vida acuática',p:['#3e9bc9','#8ad0e8','#e8483f','#f2dc8a','#1f4e6b']},
+{g:'wes anderson',n:'fantástico sr. zorro',p:['#c9861f','#e8b45c','#8a4a1e','#5c3a24','#f2e0b0']},
+{g:'wes anderson',n:'asteroid city',p:['#e8c4a0','#8ad0d0','#f2dc9b','#c97a5c','#5c8a9b']},
+{g:'películas',n:'up',p:['#5cb0e8','#f9c80e','#e8483f','#8a5cc9','#2e8b57']},
+{g:'películas',n:'coco',p:['#e8861f','#c92e6b','#5c2e8a','#1f2e5c','#f9c85c']},
+{g:'películas',n:'neón noir',p:['#0a0e1a','#1f2e5c','#e84fa0','#3ec9dc','#f2a03e']},
+{g:'películas',n:'amélie',p:['#2e5c3e','#7aa05b','#c9502e','#e8b45c','#3e2e24']},
+{g:'películas',n:'burton',p:['#141021','#3e2e5c','#8a8ac9','#c9c9dc','#5c1f2e']},
+{g:'películas',n:'la la land',p:['#2e3a8a','#5c5cc9','#c95c8a','#f2c85c','#1a1f3d']}
+
 ].filter(x=>x.p[0]!=='#band');
-const EX_CATS=['todas','tendencia','pastel','tierra','océano','retro','oscuro','neón','café','bosque','rosa','atardecer','minimal','marca'];
+const EX_GROUPS=[
+ {lab:'estilos', cats:['tendencia','pastel','tierra','océano','retro','oscuro','neón','café','bosque','rosa','atardecer','minimal','marca']},
+ {lab:'pintores', cats:['van gogh','monet','picasso','kahlo','hokusai','klimt','maestros clásicos','impresionistas','arte moderno','pop']},
+ {lab:'cine y estudios', cats:['ghibli','wes anderson','películas']}
+];
+const EX_CURATED=new Set(EX_GROUPS[1].cats.concat(EX_GROUPS[2].cats)); // solo curadas: sin «Cargar más»
 let exCat='todas', exSeed=1, exGenerated=[];
 function exRng(){ exSeed=(exSeed*1103515245+12345)&0x7fffffff; return exSeed/0x7fffffff; }
 // recetas OKLCH por categoría para el flujo infinito de «Cargar más»
@@ -758,11 +836,14 @@ function genThemed(cat){ const r=exRng, H0=r()*360, GOLD=137.508, out=[];
     }
     out.push(oklchHex(Math.max(.1,Math.min(.97,L)),C,((H%360)+360)%360)); }
   return out; }
-function exRows(){ const cur=EXPLORE.filter(x=>exCat==='todas'||x.g===exCat).map(x=>({p:x.p,g:x.g}));
+function exRows(){ const cur=EXPLORE.filter(x=>exCat==='todas'||x.g===exCat).map(x=>({p:x.p,g:x.n||x.g}));
   return cur.concat(exGenerated.map(p=>({p,g:exCat==='todas'?'generada':exCat}))); }
 function renderExplore(){
-  $('ex-chips').innerHTML=EX_CATS.map(c=>'<button data-c="'+c+'" class="'+(c===exCat?'on':'')+'">'+c+'</button>').join('');
+  const chip=c=>'<button data-c="'+c+'" class="'+(c===exCat?'on':'')+'">'+c+'</button>';
+  $('ex-chips').innerHTML='<div class="ex-chiprow">'+chip('todas')+'</div>'+
+    EX_GROUPS.map(g=>'<div class="ex-grouplab">'+g.lab+'</div><div class="ex-chiprow">'+g.cats.map(chip).join('')+'</div>').join('');
   $('ex-chips').querySelectorAll('button').forEach(b=>b.onclick=()=>{ exCat=b.dataset.c; exGenerated=[]; renderExplore(); });
+  $('ex-more').parentElement.style.display=EX_CURATED.has(exCat)?'none':'flex';
   const box=$('ex-list');
   box.innerHTML=exRows().map((row,i)=>'<div class="ex-row"><div class="mini" data-i="'+i+'" title="Usar esta paleta">'+
     row.p.map(h=>'<i style="background:'+h+'"></i>').join('')+'</div><small>'+row.g+'</small></div>').join('');
