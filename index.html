@@ -51,6 +51,9 @@
     .header-center{ position:static; transform:none; } }
   button.ghost{ background:transparent; border-color:transparent; color:var(--ink-soft); }
   button.ghost:hover{ border-color:var(--ink-line); background:var(--paper); color:var(--ink); }
+  .more{ display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px;
+    border-radius:50%; background:transparent; border:none; padding:0; color:var(--ink); transition:background .15s; }
+  .more:hover{ background:var(--paper); color:var(--accent); border:none; }
   #help-pop{ position:fixed; top:calc(var(--header-h) + 10px); right:16px; z-index:46; display:none;
     background:var(--bg); border:1.5px solid var(--ink-line); border-radius:14px; padding:7px;
     box-shadow:0 12px 32px rgba(26,22,20,.16); min-width:200px; flex-direction:column; gap:2px; }
@@ -229,7 +232,7 @@
   <button id="addcol" title="Añadir color">+ color</button>
   <button id="imgbtn" title="Extraer de una imagen">De imagen</button>
   <button id="explore" class="explore-btn">Explorar</button>
-  <button id="helpbtn" class="iconbtn" title="Más opciones" aria-label="Más opciones" style="color:var(--ink)">
+  <button id="helpbtn" class="more" title="Más opciones" aria-label="Más opciones">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
   </button>
   <input type="file" id="imgfile" accept="image/*" hidden>
