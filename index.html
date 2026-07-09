@@ -209,7 +209,7 @@
   <span class="spacer"></span>
   <span class="header-center">
   <select id="mode" title="Modo de generación">
-    <option value="smart">Aleatorio listo</option>
+    <option value="smart">Balanceado</option>
     <option value="analogo">Análogo</option>
     <option value="complementario">Complementario</option>
     <option value="triadico">Triádico</option>
@@ -289,7 +289,7 @@
     <h3><i style="background:#F9C80E"></i>Después: la relación entre colores</h3>
     <p>Cada modo decide <b>cómo se reparten los tonos en la rueda de color</b>:</p>
     <ul class="ab-modes">
-      <li><b>Aleatorio listo</b> — colores bien separados para que no se amontonen.</li>
+      <li><b>Balanceado</b> — colores bien separados para que no se amontonen.</li>
       <li><b>Análogo</b> — tonos vecinos para una sensación más tranquila.</li>
       <li><b>Complementario</b> — colores opuestos para más contraste.</li>
       <li><b>Triádico</b> — tres familias equilibradas.</li>
@@ -314,7 +314,7 @@
       <h3><i style="background:#662E9B"></i>El motor, en detalle</h3>
       <p><b>Espacio de color.</b> Todo se genera en OKLCH (la forma polar de OKLab, Björn&nbsp;Ottosson 2020): L = claridad perceptual 0–1, C = croma, H = ángulo de tono. La conversión pasa por sRGB lineal → LMS → OKLab. A diferencia de HSL, dos colores con la misma L <b>se ven</b> igual de claros, lo que hace fiables la escalera de luz y las decisiones de contraste.</p>
       <p><b>Escalera de L.</b> Base <span style="font-family:ui-monospace,monospace">[0.28, 0.45, 0.62, 0.78, 0.90]</span>, interpolada al número de columnas, con ruido ±0.04 y orden barajado. Garantiza extremos utilizables (texto/fondo) en casi toda tirada.</p>
-      <p><b>Dispersión de tonos.</b> El modo aleatorio avanza por el <b>ángulo áureo</b> (137.508°): al ser irracional respecto a 360°, n saltos nunca caen cerca — el mismo truco de las semillas del girasol. Los modos de armonía fijan offsets con jitter para que no se sientan mecánicos.</p>
+      <p><b>Dispersión de tonos.</b> El modo Balanceado avanza por el <b>ángulo áureo</b> (137.508°): al ser irracional respecto a 360°, n saltos nunca caen cerca — el mismo truco de las semillas del girasol. Los modos de armonía fijan offsets con jitter para que no se sientan mecánicos.</p>
       <p><b>Recorte de gamut.</b> Si (L,C,H) cae fuera de sRGB, una búsqueda binaria de 18 pasos reduce solo C hasta el borde del gamut. L y H se conservan: el color pierde saturación, nunca cambia de intención.</p>
       <table class="ab-tech">
         <thead><tr><th>Modo</th><th>Reglas</th></tr></thead>
@@ -437,7 +437,7 @@ function genHexes(n){
       case 'pastel':         H=(H0+i*GOLD)%360; C=rnd(0.03,0.065); L=rnd(0.84,0.93); break;
       case 'vibrante':       H=(H0+i*GOLD)%360; C=rnd(0.16,0.26);  L=rnd(0.55,0.72); break;
       case 'oscuro':         H=(H0+i*GOLD)%360; C=rnd(0.05,0.13);  L=rnd(0.22,0.45); break;
-      default:               H=(H0+i*GOLD+rnd(-16,16))%360; C=rnd(0.05,0.2); break;   // aleatorio listo: tonos en ángulo áureo + escalera de L
+      default:               H=(H0+i*GOLD+rnd(-16,16))%360; C=rnd(0.05,0.2); break;   // balanceado: tonos en ángulo áureo + escalera de L
     }
     out.push(oklchHex(Math.max(0.1,Math.min(0.97,L)), C, ((H%360)+360)%360));
   }
