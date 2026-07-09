@@ -97,6 +97,28 @@
   .cmx .sw{ width:18px; height:18px; border-radius:5px; display:inline-block; vertical-align:middle; border:1px solid var(--ink-line); }
   .cmx .aa{ font-weight:800; }
 
+  /* acerca de */
+  #ov-about .modal{ width:min(620px,96vw); }
+  .ab-lead{ font:italic 500 17px var(--font-display); line-height:1.55; margin:0 0 18px; }
+  .ab-sec{ border:1.5px solid var(--ink-line); border-left-width:5px; border-radius:12px; padding:14px 18px; margin-bottom:12px; background:var(--bg); }
+  .ab-sec h3{ margin:0 0 6px; font:800 16.5px var(--font-display); display:flex; align-items:center; gap:8px; }
+  .ab-sec h3 i{ width:11px; height:11px; border-radius:3px; flex:none; }
+  .ab-sec p{ margin:0 0 8px; font-size:13.5px; line-height:1.6; color:var(--ink); }
+  .ab-sec p:last-child{ margin-bottom:0; }
+  .ab-modes{ display:grid; grid-template-columns:1fr 1fr; gap:6px 16px; margin:8px 0 0; padding:0; list-style:none; font-size:13px; line-height:1.5; }
+  .ab-modes li b{ font-weight:800; }
+  .ab-ladder{ display:flex; height:26px; border-radius:8px; overflow:hidden; margin:10px 0 4px; border:1px solid var(--ink-line); }
+  .ab-ladder i{ flex:1; }
+  .ab-wheel{ display:flex; gap:7px; margin:10px 0 4px; }
+  .ab-wheel i{ width:22px; height:22px; border-radius:50%; border:1px solid var(--ink-line); }
+  .ab-idea{ background:var(--accent-soft); border-radius:12px; padding:13px 18px; font:italic 600 15px var(--font-display); margin:14px 0 4px; }
+  #ab-expert{ display:none; margin-top:6px; }
+  #ab-expert.open{ display:block; }
+  .ab-tech td{ padding:4px 10px 4px 0; font:12px ui-monospace,Menlo,monospace; vertical-align:top; }
+  .ab-tech td:first-child{ font-weight:700; white-space:nowrap; }
+  .ab-toggle{ width:100%; margin-top:8px; }
+  @media (max-width:560px){ .ab-modes{ grid-template-columns:1fr; } }
+
   /* explorar */
   .explore-btn{ background:linear-gradient(100deg,#D85A30 0%,#F9C80E 34%,#4ECDC4 67%,#662E9B 100%);
     color:#fff; border:none; font-weight:800; text-shadow:0 1px 2px rgba(0,0,0,.28); }
@@ -197,6 +219,7 @@
   <button id="contrast">Contraste</button>
   <button id="preview">Vista previa</button>
   <button id="export">Exportar (E)</button>
+  <button id="about">Acerca de</button>
   <span class="spacer"></span>
   <button id="share">Copiar enlace</button>
   <button id="explore" class="explore-btn">Explorar</button>
@@ -213,6 +236,62 @@
   <div style="display:flex;gap:8px;margin-top:10px">
     <button class="primary" id="ex-copy">Copiar</button>
     <button id="ex-png">Descargar PNG</button>
+  </div>
+</div></div>
+
+<div class="ov" id="ov-about"><div class="modal">
+  <button class="x" data-x>✕</button><h2>Acerca de Paletas</h2>
+  <p class="ab-lead">Paletas no elige cinco colores al azar. Construye cada paleta dentro de una estructura de diseño — tira los dados, pero solo dentro de reglas que ya saben qué hace usable una paleta.</p>
+
+  <div class="ab-sec" style="border-left-color:#D85A30">
+    <h3><i style="background:#D85A30"></i>Primero: una escalera de luz</h3>
+    <p>Antes de pensar en colores, el generador reparte los <b>niveles de claridad</b>: uno oscuro, uno claro y varios tonos medios. Por eso casi toda paleta trae un color que sirve de <b>fondo</b>, otro que sirve de <b>texto</b> y acentos que conviven — en vez de cinco colores peleándose por el mismo lugar.</p>
+    <div class="ab-ladder"><i style="background:#241f1c"></i><i style="background:#6b5d52"></i><i style="background:#a9988a"></i><i style="background:#d8cabb"></i><i style="background:#f4ede4"></i></div>
+  </div>
+
+  <div class="ab-sec" style="border-left-color:#F9C80E">
+    <h3><i style="background:#F9C80E"></i>Después: la relación entre tonos</h3>
+    <p>Cada modo decide <b>cómo se reparten los colores en la rueda</b>:</p>
+    <ul class="ab-modes">
+      <li><b>Aleatorio listo</b> — se esparcen por la rueda para no amontonarse.</li>
+      <li><b>Análogo</b> — vecinos cercanos: calma.</li>
+      <li><b>Complementario</b> — dos bandos opuestos: contraste.</li>
+      <li><b>Triádico</b> — tres familias equilibradas.</li>
+      <li><b>Monocromo</b> — un solo tono, del oscuro al claro.</li>
+      <li><b>Pastel / Vibrante / Profundo</b> — ajustan brillo e intensidad para un ánimo concreto.</li>
+    </ul>
+    <div class="ab-wheel"><i style="background:#d85a30"></i><i style="background:#b8a12c"></i><i style="background:#3fa06b"></i><i style="background:#4a7fc9"></i><i style="background:#9a5bb5"></i></div>
+    <p style="color:var(--ink-soft);font-size:12px">Si tienes un color con candado, los modos de armonía se construyen <b>alrededor de ese color</b>.</p>
+  </div>
+
+  <div class="ab-sec" style="border-left-color:#4ECDC4">
+    <h3><i style="background:#4ECDC4"></i>Por dentro: un espacio de color honesto</h3>
+    <p>El motor trabaja en <b>OKLCH</b>, un sistema de color que se parece más a cómo <b>ve el ojo humano</b> que el RGB de siempre. Así, cuando el generador pide «uno claro y uno oscuro», el resultado realmente se ve así. Y si un color es demasiado intenso para tu pantalla, la app le baja <b>solo la intensidad</b> — sin traicionar el tono ni el brillo que quería.</p>
+  </div>
+
+  <div class="ab-idea">La idea simple: los dados caen siempre dentro de una estructura que ya entiende qué hace funcionar una paleta.</div>
+
+  <button class="ab-toggle" id="ab-toggle">Para expertos · lo técnico ▾</button>
+  <div id="ab-expert">
+    <div class="ab-sec" style="border-left-color:#662E9B">
+      <h3><i style="background:#662E9B"></i>El motor, en detalle</h3>
+      <p><b>Espacio de color.</b> Todo se genera en OKLCH (la forma polar de OKLab, Björn&nbsp;Ottosson 2020): L = claridad perceptual 0–1, C = croma, H = ángulo de tono. La conversión pasa por sRGB lineal → LMS → OKLab. A diferencia de HSL, dos colores con la misma L <b>se ven</b> igual de claros, lo que hace fiables la escalera de luz y las decisiones de contraste.</p>
+      <p><b>Escalera de L.</b> Base <span style="font-family:ui-monospace,monospace">[0.28, 0.45, 0.62, 0.78, 0.90]</span>, interpolada al número de columnas, con ruido ±0.04 y orden barajado. Garantiza extremos utilizables (texto/fondo) en casi toda tirada.</p>
+      <p><b>Dispersión de tonos.</b> El modo aleatorio avanza por el <b>ángulo áureo</b> (137.508°): al ser irracional respecto a 360°, n saltos nunca caen cerca — el mismo truco de las semillas del girasol. Los modos de armonía fijan offsets (±18° análogo, 180° complementario, 120° triádico) con jitter para que no se sientan mecánicos.</p>
+      <p><b>Recorte de gamut.</b> Si (L,C,H) cae fuera de sRGB, una búsqueda binaria de 18 pasos reduce solo C hasta el borde del gamut. L y H se conservan: el color pierde saturación, nunca cambia de intención.</p>
+      <table class="ab-tech">
+        <tr><td>pastel</td><td>C 0.03–0.065 · L 0.84–0.93</td></tr>
+        <tr><td>vibrante</td><td>C 0.16–0.26 · L 0.55–0.72</td></tr>
+        <tr><td>profundo</td><td>C 0.05–0.13 · L 0.22–0.45</td></tr>
+        <tr><td>análogo</td><td>H₀ ± pasos de 14–22° · C 0.07–0.16</td></tr>
+        <tr><td>complementario</td><td>alterna H₀ / H₀+180° ± 14°</td></tr>
+        <tr><td>triádico</td><td>H₀ + {0°, 120°, 240°} ± 12°</td></tr>
+        <tr><td>monocromo</td><td>H₀ ± 5° · L barrida 0.20→0.92</td></tr>
+      </table>
+      <p style="margin-top:8px"><b>Contraste.</b> Cada columna calcula su texto ideal (negro o blanco) por luminancia relativa WCAG y muestra el ratio; la matriz de Contraste evalúa los 20 pares con umbrales AA (4.5), AA-grande (3) y AAA (7).</p>
+      <p><b>De imagen.</b> K-means (k = nº de columnas, 12 iteraciones) sobre una miniatura de 72×72, con centroides ordenados por L para que la paleta salga en escalera.</p>
+      <p><b>Estado.</b> La paleta vive en el hash de la URL (compartir = copiar enlace), el historial de deshacer guarda hasta 80 pasos, y «Mis paletas» usa localStorage — nada sale de tu equipo.</p>
+    </div>
   </div>
 </div></div>
 
@@ -706,6 +785,8 @@ $('addcol').onclick=()=>{ if(colors.length<MAXC){ colors.push({hex:genHexes(colo
 $('save').onclick=savePalette;
 $('mine').onclick=()=>{ renderMine(); $('ov-mine').classList.add('open'); };
 $('explore').onclick=()=>{ renderExplore(); $('ov-explore').classList.add('open'); };
+$('about').onclick=()=>$('ov-about').classList.add('open');
+$('ab-toggle').onclick=()=>{ const x=$('ab-expert'); x.classList.toggle('open'); $('ab-toggle').textContent=x.classList.contains('open')?'Para expertos · lo técnico ▴':'Para expertos · lo técnico ▾'; };
 $('ex-more').onclick=()=>{ for(let k=0;k<12;k++) exGenerated.push(genThemed(exCat)); renderExplore(); $('ex-list').scrollTop=$('ex-list').scrollHeight; };
 $('contrast').onclick=()=>{ renderMatrix(); $('ov-contrast').classList.add('open'); };
 $('preview').onclick=()=>{ renderPreview(); $('ov-preview').classList.add('open'); };
