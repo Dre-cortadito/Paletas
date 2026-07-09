@@ -155,12 +155,12 @@
 
   #ex-chips{ margin-bottom:12px; }
   .ex-chiprow{ display:flex; gap:6px; flex-wrap:wrap; }
-  .ex-grouplab{ display:flex; align-items:center; justify-content:space-between; width:100%;
+  .ex-grouplab{ display:inline-flex; align-items:center; gap:5px;
     font:800 10.5px var(--font-ui); text-transform:uppercase; letter-spacing:.7px;
-    color:var(--ink-soft); margin:10px 0 5px; padding:0; background:transparent; border:none;
+    color:var(--ink); margin:10px 0 5px; padding:0; background:transparent; border:none;
     cursor:pointer; user-select:none; }
-  .ex-grouplab:hover{ color:var(--ink); }
-  .ex-grouplab .chev{ font-size:11px; transition:transform .16s ease; opacity:.65; }
+  .ex-grouplab:hover{ opacity:.7; }
+  .ex-grouplab .chev{ font-size:11px; line-height:1; color:var(--ink); transition:transform .16s ease; }
   .ex-grouplab.open .chev{ transform:rotate(180deg); }
   .ex-groupwrap:not(.open) .ex-chiprow{ display:none; }
   #ex-chips button{ padding:6px 13px; font-size:12.5px; }
