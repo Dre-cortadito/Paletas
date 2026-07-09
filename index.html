@@ -47,6 +47,13 @@
   .spacer{ flex:1; }
   button.ghost{ background:transparent; border-color:transparent; color:var(--ink-soft); }
   button.ghost:hover{ border-color:var(--ink-line); background:var(--paper); color:var(--ink); }
+  #help-pop{ position:fixed; top:calc(var(--header-h) + 10px); right:16px; z-index:46; display:none;
+    background:var(--bg); border:1.5px solid var(--ink-line); border-radius:14px; padding:7px;
+    box-shadow:0 12px 32px rgba(26,22,20,.16); min-width:200px; flex-direction:column; gap:2px; }
+  #help-pop.open{ display:flex; }
+  #help-pop button{ background:transparent; border:none; border-radius:9px; text-align:left; padding:9.5px 13px;
+    font:700 13.5px var(--font-ui); width:100%; }
+  #help-pop button:hover{ background:var(--paper); }
   #keys-pop{ position:fixed; top:calc(var(--header-h) + 10px); right:16px; z-index:45; display:none;
     background:var(--bg); border:1.5px solid var(--ink-line); border-radius:14px; padding:12px 16px;
     box-shadow:0 12px 32px rgba(26,22,20,.16); min-width:250px; }
@@ -80,7 +87,10 @@
 
   /* ===== barra inferior ===== */
   #bottombar{ display:flex; gap:8px; align-items:center; padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+    box-shadow:0 -6px 16px rgba(26,22,20,.05);
     border-top:1px solid var(--ink-line); flex-wrap:wrap; flex:none; background:var(--bg); }
+
+  #bottombar button{ padding:8.5px 15px; font-size:13px; }
 
   /* ===== modales ===== */
   .ov{ position:fixed; inset:0; background:rgba(26,22,20,.45); display:none; align-items:center; justify-content:center; z-index:50; padding:18px; }
@@ -132,9 +142,8 @@
   @media (max-width:560px){ .ab-modes{ grid-template-columns:1fr; } }
 
   /* explorar */
-  .explore-btn{ background:linear-gradient(100deg,#D85A30 0%,#F9C80E 34%,#4ECDC4 67%,#662E9B 100%);
-    color:#fff; border:none; font-weight:800; text-shadow:0 1px 2px rgba(0,0,0,.28); }
-  .explore-btn:hover{ filter:brightness(1.07); border:none; }
+  .explore-btn{ background:var(--accent-soft); color:#B84628; border:1.5px solid #EBC5B3; font-weight:800; }
+  .explore-btn:hover{ background:#F6E0D3; border-color:#D89F85; }
 
   #ex-chips{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
   #ex-chips button{ padding:6px 13px; font-size:12.5px; }
@@ -180,7 +189,7 @@
     font:800 13px var(--font-ui); letter-spacing:.4px; padding:8px 16px; border-radius:999px; opacity:0;
     transition:opacity .18s; pointer-events:none; z-index:99; box-shadow:0 6px 18px rgba(0,0,0,.18); }
   #toast.show{ opacity:1; }
-  @media (max-width:640px){ header{ gap:8px; } .wordmark{ font-size:19px; } #keysbtn{ display:none; } }
+  @media (max-width:640px){ header{ gap:8px; } .wordmark{ font-size:19px; } }
 </style>
 </head>
 <body>
@@ -214,9 +223,16 @@
   <span class="spacer"></span>
   <button id="addcol" title="Añadir color">+ color</button>
   <button id="imgbtn" title="Extraer de una imagen">De imagen</button>
-  <button id="keysbtn" class="ghost" title="Atajos de teclado">Atajos</button>
+  <button id="explore" class="explore-btn">Explorar</button>
+  <button id="helpbtn" class="iconbtn ghost" title="Ayuda" aria-label="Ayuda" style="font:800 17px var(--font-display)">?</button>
   <input type="file" id="imgfile" accept="image/*" hidden>
 </header>
+
+<div id="help-pop">
+  <button id="mi-atajos">Atajos de teclado</button>
+  <button id="about">Acerca de Paletas</button>
+  <button id="mi-tech">Lo técnico</button>
+</div>
 
 <div id="keys-pop">
   <div><span>Genera</span><b>Espacio</b></div>
@@ -230,15 +246,13 @@
 <div id="strip"></div>
 
 <div id="bottombar">
-  <button id="save" class="ghost">Guardar</button>
-  <button id="mine" class="ghost">Mis paletas</button>
-  <button id="contrast" class="ghost">Contraste</button>
-  <button id="preview" class="ghost">Vista previa</button>
-  <button id="export" class="ghost">Exportar</button>
-  <button id="about" class="ghost">Acerca de</button>
+  <button id="save">Guardar</button>
+  <button id="mine">Mis paletas</button>
+  <button id="contrast">Contraste</button>
+  <button id="preview">Vista previa</button>
   <span class="spacer"></span>
-  <button id="share" class="ghost">Copiar enlace</button>
-  <button id="explore" class="explore-btn">Explorar</button>
+  <button id="export">Exportar</button>
+  <button id="share">Copiar enlace</button>
 </div>
 
 <div class="ov" id="ov-shades"><div class="modal"><button class="x" data-x>✕</button><h2>Tonos <span id="sh-hex" style="opacity:.6;font-size:13px;font-family:var(--font-ui)"></span></h2><div id="shades"></div></div></div>
@@ -805,10 +819,15 @@ $('addcol').onclick=()=>{ if(colors.length<MAXC){ colors.push({hex:genHexes(colo
 $('save').onclick=savePalette;
 $('mine').onclick=()=>{ renderMine(); $('ov-mine').classList.add('open'); };
 $('explore').onclick=()=>{ renderExplore(); $('ov-explore').classList.add('open'); };
-$('about').onclick=()=>$('ov-about').classList.add('open');
-$('keysbtn').onclick=e=>{ e.stopPropagation(); $('keys-pop').classList.toggle('open'); };
-document.addEventListener('click',e=>{ const p=$('keys-pop'); if(p.classList.contains('open') && !p.contains(e.target) && e.target.id!=='keysbtn') p.classList.remove('open'); });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') $('keys-pop').classList.remove('open'); });
+$('about').onclick=()=>{ $('help-pop').classList.remove('open'); $('ov-about').classList.add('open'); };
+$('helpbtn').onclick=e=>{ e.stopPropagation(); $('keys-pop').classList.remove('open'); $('help-pop').classList.toggle('open'); };
+$('mi-atajos').onclick=e=>{ e.stopPropagation(); $('help-pop').classList.remove('open'); $('keys-pop').classList.add('open'); };
+$('mi-tech').onclick=()=>{ $('help-pop').classList.remove('open'); $('ov-about').classList.add('open');
+  const x=$('ab-expert'); x.classList.add('open'); $('ab-toggle').textContent='Para expertos · lo técnico ▴';
+  requestAnimationFrame(()=>x.scrollIntoView({behavior:'smooth',block:'start'})); };
+document.addEventListener('click',e=>{ for(const id of ['keys-pop','help-pop']){ const p=$(id);
+  if(p.classList.contains('open') && !p.contains(e.target) && e.target.id!=='helpbtn') p.classList.remove('open'); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ $('keys-pop').classList.remove('open'); $('help-pop').classList.remove('open'); } });
 $('ab-toggle').onclick=()=>{ const x=$('ab-expert'); x.classList.toggle('open'); $('ab-toggle').textContent=x.classList.contains('open')?'Para expertos · lo técnico ▴':'Para expertos · lo técnico ▾'; };
 $('ex-more').onclick=()=>{ for(let k=0;k<12;k++) exGenerated.push(genThemed(exCat)); renderExplore(); $('ex-list').scrollTop=$('ex-list').scrollHeight; };
 $('contrast').onclick=()=>{ renderMatrix(); $('ov-contrast').classList.add('open'); };
