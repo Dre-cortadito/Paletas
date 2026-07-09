@@ -155,8 +155,14 @@
 
   #ex-chips{ margin-bottom:12px; }
   .ex-chiprow{ display:flex; gap:6px; flex-wrap:wrap; }
-  .ex-grouplab{ font:800 10.5px var(--font-ui); text-transform:uppercase; letter-spacing:.7px;
-    color:var(--ink-soft); margin:10px 0 5px; }
+  .ex-grouplab{ display:flex; align-items:center; justify-content:space-between; width:100%;
+    font:800 10.5px var(--font-ui); text-transform:uppercase; letter-spacing:.7px;
+    color:var(--ink-soft); margin:10px 0 5px; padding:0; background:transparent; border:none;
+    cursor:pointer; user-select:none; }
+  .ex-grouplab:hover{ color:var(--ink); }
+  .ex-grouplab .chev{ font-size:11px; transition:transform .16s ease; opacity:.65; }
+  .ex-grouplab.open .chev{ transform:rotate(180deg); }
+  .ex-groupwrap:not(.open) .ex-chiprow{ display:none; }
   #ex-chips button{ padding:6px 13px; font-size:12.5px; }
   #ex-chips button.on{ background:var(--accent); color:#fff; border-color:var(--accent); }
   #ex-list{ height:42dvh; overflow:auto; padding-right:2px; }   /* FIXED height — the modal stays one size no matter the category */
@@ -855,7 +861,7 @@ const EX_GROUPS=[
  {lab:'cine y estudios', cats:['ghibli','wes anderson','studio chizu','pixar','laika','películas']}
 ];
 const EX_CURATED=new Set(EX_GROUPS.slice(1).flatMap(g=>g.cats)); // todo salvo «estilos»: curadas, sin «Cargar más»
-let exCat='todas', exSeed=1, exGenerated=[];
+let exCat='todas', exSeed=1, exGenerated=[], exOpenGroups=new Set();
 function exRng(){ exSeed=(exSeed*1103515245+12345)&0x7fffffff; return exSeed/0x7fffffff; }
 // recetas OKLCH por categoría para el flujo infinito de «Cargar más»
 function genThemed(cat){ const r=exRng, H0=r()*360, GOLD=137.508, out=[];
@@ -882,8 +888,14 @@ function exRows(){ const cur=EXPLORE.filter(x=>exCat==='todas'||x.g===exCat).map
 function renderExplore(){
   const chip=c=>'<button data-c="'+c+'" class="'+(c===exCat?'on':'')+'">'+c+'</button>';
   $('ex-chips').innerHTML='<div class="ex-chiprow">'+chip('todas')+'</div>'+
-    EX_GROUPS.map(g=>'<div class="ex-grouplab">'+g.lab+'</div><div class="ex-chiprow">'+g.cats.map(chip).join('')+'</div>').join('');
-  $('ex-chips').querySelectorAll('button').forEach(b=>b.onclick=()=>{ exCat=b.dataset.c; exGenerated=[]; renderExplore(); });
+    EX_GROUPS.map(g=>{ const open=exOpenGroups.has(g.lab)||g.cats.includes(exCat);
+      return '<div class="ex-groupwrap'+(open?' open':'')+'" data-g="'+g.lab+'">'+
+        '<div class="ex-grouplab'+(open?' open':'')+'" data-glab="'+g.lab+'">'+g.lab+
+        '<span class="chev" aria-hidden="true">▾</span></div>'+
+        '<div class="ex-chiprow">'+g.cats.map(chip).join('')+'</div></div>'; }).join('');
+  $('ex-chips').querySelectorAll('.ex-grouplab').forEach(l=>l.onclick=()=>{
+    const lab=l.dataset.glab; exOpenGroups.has(lab)?exOpenGroups.delete(lab):exOpenGroups.add(lab); renderExplore(); });
+  $('ex-chips').querySelectorAll('.ex-chiprow button').forEach(b=>b.onclick=()=>{ exCat=b.dataset.c; exGenerated=[]; renderExplore(); });
   $('ex-more').parentElement.style.display='flex';
   $('ex-more').style.visibility=EX_CURATED.has(exCat)?'hidden':'visible';
   const box=$('ex-list');
