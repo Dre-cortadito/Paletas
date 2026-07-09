@@ -25,25 +25,25 @@
     --accent:#D85A30; --accent-soft:#f9e4db; --accent-2:#7a9a6d;
     --font-display:'Newsreader','DM Serif Display',Georgia,serif;
     --font-ui:'Helvetica Neue',Helvetica,Arial,sans-serif;
-    --header-h:56px;
+    --header-h:72px;
   }
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{ margin:0; height:100%; background:var(--bg); color:var(--ink); font:400 15px/1.45 var(--font-ui); }
   body{ display:flex; flex-direction:column; min-height:100dvh; }
 
-  header{ display:flex; align-items:center; gap:12px; height:var(--header-h); padding:0 16px;
+  header{ display:flex; align-items:center; gap:14px; height:var(--header-h); padding:0 22px;
     border-bottom:1px solid var(--ink-line); flex:none; background:var(--bg); }
-  .brand{ display:flex; align-items:center; gap:9px; margin-right:4px; }
-  .brand svg{ width:26px; height:26px; display:block; }
-  .wordmark{ margin:0; font:800 21px var(--font-display); letter-spacing:.2px; }
+  .brand{ display:flex; align-items:center; gap:11px; margin-right:10px; }
+  .brand svg{ width:36px; height:36px; display:block; }
+  .wordmark{ margin:0; font:800 27px var(--font-display); letter-spacing:.2px; }
   .wordmark .dot{ color:var(--accent); }
-  select,button{ font:700 13px var(--font-ui); color:var(--ink); background:var(--paper);
-    border:1.5px solid var(--ink-line); border-radius:999px; padding:8px 14px; cursor:pointer; letter-spacing:.2px; }
+  select,button{ font:700 13.5px var(--font-ui); color:var(--ink); background:var(--paper);
+    border:1.5px solid var(--ink-line); border-radius:999px; padding:10px 17px; cursor:pointer; letter-spacing:.2px; }
   select:hover,button:hover{ border-color:var(--ink-soft); }
   button.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
   button:disabled{ opacity:.4; cursor:default; }
-  .iconbtn{ width:36px; height:36px; padding:0; display:inline-flex; align-items:center; justify-content:center; }
-  .iconbtn svg{ width:17px; height:17px; display:block; }
+  .iconbtn{ width:42px; height:42px; padding:0; display:inline-flex; align-items:center; justify-content:center; }
+  .iconbtn svg{ width:19px; height:19px; display:block; }
   .spacer{ flex:1; }
   .kbd{ display:flex; align-items:center; justify-content:center; gap:18px; flex:1; min-width:0;
     font-size:12.5px; color:var(--ink-soft); font-weight:400; overflow:hidden; }
