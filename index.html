@@ -985,7 +985,11 @@ function renderPk(){ const body=$('pk-body'); const rgb=hsv2rgb(pkH,pkS,pkV);
 function closeOvs(){ if($('ov-picker').classList.contains('open')) pkCommit();
   document.querySelectorAll('.ov').forEach(o=>o.classList.remove('open')); }
 document.querySelectorAll('[data-x]').forEach(b=>b.onclick=closeOvs);
-document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) closeOvs(); }));
+document.querySelectorAll('.ov').forEach(o=>{
+  let downOnBackdrop=false;
+  o.addEventListener('pointerdown',e=>{ downOnBackdrop=(e.target===o); });
+  o.addEventListener('click',e=>{ if(e.target===o && downOnBackdrop) closeOvs(); downOnBackdrop=false; });
+});
 $('gen').onclick=generate;
 $('undo').onclick=undo;
 $('mode').onchange=e=>{ mode=e.target.value; };
