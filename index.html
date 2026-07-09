@@ -31,7 +31,7 @@
   html,body{ margin:0; height:100%; background:var(--bg); color:var(--ink); font:400 15px/1.45 var(--font-ui); }
   body{ display:flex; flex-direction:column; min-height:100dvh; }
 
-  header{ display:flex; align-items:center; gap:14px; height:var(--header-h); padding:0 22px;
+  header{ display:flex; align-items:center; gap:14px; height:var(--header-h); padding:0 22px; position:relative;
     border-bottom:1px solid var(--ink-line); flex:none; background:var(--bg); }
   .brand{ display:flex; align-items:center; gap:14px; margin-right:10px; }
   .brand svg{ width:36px; height:36px; display:block; }
@@ -45,6 +45,10 @@
   .iconbtn{ width:42px; height:42px; padding:0; display:inline-flex; align-items:center; justify-content:center; }
   .iconbtn svg{ width:19px; height:19px; display:block; }
   .spacer{ flex:1; }
+  .header-center{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    display:flex; align-items:center; gap:14px; }
+  @media (max-width:1100px){ header{ flex-wrap:nowrap; }
+    .header-center{ position:static; transform:none; } }
   button.ghost{ background:transparent; border-color:transparent; color:var(--ink-soft); }
   button.ghost:hover{ border-color:var(--ink-line); background:var(--paper); color:var(--ink); }
   #help-pop{ position:fixed; top:calc(var(--header-h) + 10px); right:16px; z-index:46; display:none;
@@ -89,8 +93,6 @@
   #bottombar{ display:flex; gap:8px; align-items:center; padding:10px 16px calc(10px + env(safe-area-inset-bottom));
     box-shadow:0 -6px 16px rgba(26,22,20,.05);
     border-top:1px solid var(--ink-line); flex-wrap:wrap; flex:none; background:var(--bg); }
-
-  #bottombar button{ padding:8.5px 15px; font-size:13px; }
 
   /* ===== modales ===== */
   .ov{ position:fixed; inset:0; background:rgba(26,22,20,.45); display:none; align-items:center; justify-content:center; z-index:50; padding:18px; }
@@ -142,8 +144,8 @@
   @media (max-width:560px){ .ab-modes{ grid-template-columns:1fr; } }
 
   /* explorar */
-  .explore-btn{ background:var(--accent-soft); color:#B84628; border:1.5px solid #EBC5B3; font-weight:800; }
-  .explore-btn:hover{ background:#F6E0D3; border-color:#D89F85; }
+  .explore-btn{ background:#FFF7D6; color:#7A5200; border:1.5px solid #E9D58A; font-weight:800; }
+  .explore-btn:hover{ background:#FCEFB8; border-color:#D9BE5F; }
 
   #ex-chips{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
   #ex-chips button{ padding:6px 13px; font-size:12.5px; }
@@ -205,6 +207,7 @@
     <h1 class="wordmark">Paletas<span class="dot">.</span></h1>
   </span>
   <span class="spacer"></span>
+  <span class="header-center">
   <select id="mode" title="Modo de generación">
     <option value="smart">Aleatorio listo</option>
     <option value="analogo">Análogo</option>
@@ -220,11 +223,12 @@
     <!-- icono compartido: _shared/icons/restart.svg (espejado = deshacer) -->
     <svg viewBox="0 0 24 24" fill="currentColor" style="transform:scaleX(-1)"><path d="M12 5V2L6 7l6 5V8.5c3 0 5.5 2.5 5.5 5.5S15 19.5 12 19.5 6.5 17 6.5 14H4c0 4.4 3.6 8 8 8s8-3.6 8-8-3.6-8-8-8z"/></svg>
   </button>
+  </span>
   <span class="spacer"></span>
   <button id="addcol" title="Añadir color">+ color</button>
   <button id="imgbtn" title="Extraer de una imagen">De imagen</button>
   <button id="explore" class="explore-btn">Explorar</button>
-  <button id="helpbtn" class="iconbtn ghost" title="Más opciones" aria-label="Más opciones">
+  <button id="helpbtn" class="iconbtn" title="Más opciones" aria-label="Más opciones">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
   </button>
   <input type="file" id="imgfile" accept="image/*" hidden>
