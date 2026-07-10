@@ -192,7 +192,9 @@
   /* selector de color */
   /* pk-body reserves the PICKER tab's height (square 16:9 + hue slider), so switching to
      HEX/HSB/etc. never shrinks the dialog — the modal keeps one constant size. */
-  #pk-body{ min-height:calc((min(430px, 96vw) - 48px) * 9 / 16 + 28px); }
+  #pk-body{ min-height:calc((min(430px, 96vw) - 48px) * 9 / 16 + 28px + 46px); }
+  .pk-hextop{ width:100%; box-sizing:border-box; font:700 15px ui-monospace,Menlo,monospace; text-align:center; text-transform:uppercase; letter-spacing:.5px; padding:9px; margin-bottom:12px; border:1.5px solid var(--ink-line); border-radius:8px; background:var(--bg); color:var(--ink); }
+  .pk-hextop:focus{ outline:none; border-color:var(--accent); }
   #pk-sq{ position:relative; width:100%; aspect-ratio:16/9; border-radius:10px; cursor:crosshair; touch-action:none; border:1px solid var(--ink-line); }
   .pk-dot{ position:absolute; width:18px; height:18px; border-radius:50%; border:3.5px solid #fff; box-shadow:0 0 0 1.5px rgba(0,0,0,.35), inset 0 0 0 1px rgba(0,0,0,.2); transform:translate(-50%,-50%); pointer-events:none; }
   #pk-hue{ position:relative; height:14px; border-radius:999px; margin-top:14px; cursor:pointer; touch-action:none;
@@ -399,12 +401,12 @@
 <div class="ov" id="ov-picker"><div class="modal" style="width:min(430px,96vw)">
   <button class="x" data-x>✕</button><h2>Color</h2>
   <div class="tabs" id="pk-tabs">
-    <button data-t="picker" class="on">Picker</button><button data-t="hex">HEX</button><button data-t="hsb">HSB</button><button data-t="hsl">HSL</button><button data-t="rgb">RGB</button><button data-t="cmyk">CMYK</button>
+    <button data-t="picker" class="on">Hex / Picker</button><button data-t="hsb">HSB</button><button data-t="hsl">HSL</button><button data-t="rgb">RGB</button><button data-t="cmyk">CMYK</button>
   </div>
   <div id="pk-body"></div>
   <div style="display:flex;gap:12px;align-items:center;margin-top:16px">
     <div id="pk-preview"></div>
-    <input id="pk-hexin" spellcheck="false" autocomplete="off" maxlength="7" style="font:700 14px ui-monospace,monospace; width:104px; padding:7px 9px; border:1.5px solid var(--ink-line); border-radius:8px; background:var(--bg); color:var(--ink);">
+    <span id="pk-hexlab" style="font:700 14px ui-monospace,monospace"></span>
     <span class="spacer"></span>
     <button class="primary" id="pk-ok">Listo</button>
   </div>
@@ -927,20 +929,19 @@ function pkHex(){ return rgb2hexs(hsv2rgb(pkH,pkS,pkV)); }
 function openPicker(i){ pkI=i; pkTab='picker'; pkDirty=false;
   const [h,sv,v]=rgb2hsv(...hex2rgb(colors[i].hex)); pkH=h; pkS=sv; pkV=v;
   document.querySelectorAll('#pk-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t==='picker'));
-  const hi=$('pk-hexin'); if(hi){ hi.value=pkHex(); hi.oninput=e=>{ const v=e.target.value.trim().replace(/^#/,'');
-    if(/^[0-9a-fA-F]{6}$/.test(v)){ const [hh,ss,vv]=rgb2hsv(...hex2rgb('#'+v)); pkH=hh; pkS=ss; pkV=vv; pkApplyLive(); renderPk(); } }; }
   renderPk(); $('ov-picker').classList.add('open'); }
 function pkApplyLive(){ pkDirty=true; const hx=pkHex(); colors[pkI]={hex:hx,locked:colors[pkI].locked};
   const col=document.querySelector('.col[data-i="'+pkI+'"]');
   if(col){ const tx=bestText(hx); col.style.background=hx; col.style.color=tx;
     col.querySelector('.hex').textContent=hx.slice(1); col.querySelector('.name').textContent=colorName(hx);
     const r=ratio(hx,tx); col.querySelector('.cr').textContent=r.toFixed(1)+(r>=4.5?' AA':r>=3?' AA+':' ✗'); }
-  $('pk-preview').style.background=hx; const hi=$('pk-hexin'); if(hi&&document.activeElement!==hi) hi.value=hx; }
+  $('pk-preview').style.background=hx; $('pk-hexlab').textContent=hx;
+  const hi=$('pk-hexin'); if(hi&&document.activeElement!==hi) hi.value=hx; }
 function pkCommit(){ if(pkDirty){ pushHistory(); render(); pkDirty=false; } }
 function fields(defs){ return '<div class="pk-fields">'+defs.map(d=>'<label>'+d[0]+'<input id="pkf-'+d[0]+'" value="'+d[1]+'"></label>').join('')+'</div>'; }
 function renderPk(){ const body=$('pk-body'); const rgb=hsv2rgb(pkH,pkS,pkV);
   if(pkTab==='picker'){
-    body.innerHTML='<div id="pk-sq"><i class="pk-dot"></i></div><div id="pk-hue"><i class="pk-dot"></i></div>';
+    body.innerHTML='<input id="pk-hexin" class="pk-hextop" spellcheck="false" autocomplete="off" maxlength="7"><div id="pk-sq"><i class="pk-dot"></i></div><div id="pk-hue"><i class="pk-dot"></i></div>';
     const sq=$('pk-sq'), hue=$('pk-hue');
     const paint=()=>{ sq.style.background='linear-gradient(to top,#000,rgba(0,0,0,0)),linear-gradient(to right,#fff,hsl('+pkH+' 100% 50%))';
       const d1=sq.querySelector('.pk-dot'); d1.style.left=(pkS*100)+'%'; d1.style.top=((1-pkV)*100)+'%';
@@ -954,6 +955,8 @@ function renderPk(){ const body=$('pk-body'); const rgb=hsv2rgb(pkH,pkS,pkV);
         el.addEventListener('pointermove',mv); el.addEventListener('pointerup',up); }); };
     drag(sq,(x,y)=>{ pkS=x; pkV=1-y; });
     drag(hue,(x)=>{ pkH=x*360; });
+    const hxin=$('pk-hexin'); hxin.value=pkHex(); hxin.oninput=e=>{ const v=e.target.value.trim().replace(/^#/,'');
+      if(/^[0-9a-fA-F]{6}$/.test(v)){ const [hh,ss,vv]=rgb2hsv(...hex2rgb('#'+v)); pkH=hh; pkS=ss; pkV=vv; paint(); pkApplyLive(); } };
     paint();
   } else if(pkTab==='hex'){
     body.innerHTML=fields([['hex',pkHex()]]);
@@ -981,7 +984,8 @@ function renderPk(){ const body=$('pk-body'); const rgb=hsv2rgb(pkH,pkS,pkV);
       const [hh,ss,vv]=rgb2hsv(...cmyk2rgb(...v)); pkH=hh; pkS=ss; pkV=vv; pkApplyLive(); };
     ['c','m','y','k'].forEach(k=>$('pkf-'+k).oninput=upd);
   }
-  $('pk-preview').style.background=pkHex(); const hi=$('pk-hexin'); if(hi&&document.activeElement!==hi) hi.value=pkHex(); }
+  $('pk-preview').style.background=pkHex(); $('pk-hexlab').textContent=pkHex();
+  const hi=$('pk-hexin'); if(hi&&document.activeElement!==hi) hi.value=pkHex(); }
 
 /* ================= conexiones ================= */
 function closeOvs(){ if($('ov-picker').classList.contains('open')) pkCommit();
