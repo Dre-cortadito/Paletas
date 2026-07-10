@@ -404,7 +404,7 @@
   <div id="pk-body"></div>
   <div style="display:flex;gap:12px;align-items:center;margin-top:16px">
     <div id="pk-preview"></div>
-    <span id="pk-hexlab" style="font:700 14px ui-monospace,monospace"></span>
+    <input id="pk-hexin" spellcheck="false" autocomplete="off" maxlength="7" style="font:700 14px ui-monospace,monospace; width:104px; padding:7px 9px; border:1.5px solid var(--ink-line); border-radius:8px; background:var(--bg); color:var(--ink);">
     <span class="spacer"></span>
     <button class="primary" id="pk-ok">Listo</button>
   </div>
@@ -927,13 +927,15 @@ function pkHex(){ return rgb2hexs(hsv2rgb(pkH,pkS,pkV)); }
 function openPicker(i){ pkI=i; pkTab='picker'; pkDirty=false;
   const [h,sv,v]=rgb2hsv(...hex2rgb(colors[i].hex)); pkH=h; pkS=sv; pkV=v;
   document.querySelectorAll('#pk-tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t==='picker'));
+  const hi=$('pk-hexin'); if(hi){ hi.value=pkHex(); hi.oninput=e=>{ const v=e.target.value.trim().replace(/^#/,'');
+    if(/^[0-9a-fA-F]{6}$/.test(v)){ const [hh,ss,vv]=rgb2hsv(...hex2rgb('#'+v)); pkH=hh; pkS=ss; pkV=vv; pkApplyLive(); renderPk(); } }; }
   renderPk(); $('ov-picker').classList.add('open'); }
 function pkApplyLive(){ pkDirty=true; const hx=pkHex(); colors[pkI]={hex:hx,locked:colors[pkI].locked};
   const col=document.querySelector('.col[data-i="'+pkI+'"]');
   if(col){ const tx=bestText(hx); col.style.background=hx; col.style.color=tx;
     col.querySelector('.hex').textContent=hx.slice(1); col.querySelector('.name').textContent=colorName(hx);
     const r=ratio(hx,tx); col.querySelector('.cr').textContent=r.toFixed(1)+(r>=4.5?' AA':r>=3?' AA+':' ✗'); }
-  $('pk-preview').style.background=hx; $('pk-hexlab').textContent=hx; }
+  $('pk-preview').style.background=hx; const hi=$('pk-hexin'); if(hi&&document.activeElement!==hi) hi.value=hx; }
 function pkCommit(){ if(pkDirty){ pushHistory(); render(); pkDirty=false; } }
 function fields(defs){ return '<div class="pk-fields">'+defs.map(d=>'<label>'+d[0]+'<input id="pkf-'+d[0]+'" value="'+d[1]+'"></label>').join('')+'</div>'; }
 function renderPk(){ const body=$('pk-body'); const rgb=hsv2rgb(pkH,pkS,pkV);
@@ -979,7 +981,7 @@ function renderPk(){ const body=$('pk-body'); const rgb=hsv2rgb(pkH,pkS,pkV);
       const [hh,ss,vv]=rgb2hsv(...cmyk2rgb(...v)); pkH=hh; pkS=ss; pkV=vv; pkApplyLive(); };
     ['c','m','y','k'].forEach(k=>$('pkf-'+k).oninput=upd);
   }
-  $('pk-preview').style.background=pkHex(); $('pk-hexlab').textContent=pkHex(); }
+  $('pk-preview').style.background=pkHex(); const hi=$('pk-hexin'); if(hi&&document.activeElement!==hi) hi.value=pkHex(); }
 
 /* ================= conexiones ================= */
 function closeOvs(){ if($('ov-picker').classList.contains('open')) pkCommit();
